@@ -1,0 +1,1116 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Pier Summer School Menu</title>
+<style>
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+:root {
+  --bg:#fff; --bg2:#f6f5f2; --bg3:#eeecea;
+  --text:#1a1a18; --text2:#6b6a65; --text3:#9b9a94;
+  --border:rgba(0,0,0,0.10); --border2:rgba(0,0,0,0.18);
+  --accent:#1a6b3c; --accent-bg:#eaf4ee; --accent-text:#1a6b3c;
+  --warn-bg:#fff3e6; --warn-text:#7a3a00;
+  --danger-bg:#fdf0f0; --danger-text:#8b1a1a; --danger-border:rgba(139,26,26,0.3);
+  --info-bg:#eef3fd; --info-text:#1a3a6b;
+  --double-bg:#fff8e6; --double-text:#7a4a00; --double-border:#f0c040;
+  --radius:10px; --radius-sm:6px;
+}
+@media(prefers-color-scheme:dark){:root{
+  --bg:#1c1c1a; --bg2:#252522; --bg3:#2e2e2b;
+  --text:#f0efe9; --text2:#9b9a94; --text3:#6b6a65;
+  --border:rgba(255,255,255,0.10); --border2:rgba(255,255,255,0.18);
+  --accent-bg:#1a3327; --accent-text:#5ecb8a;
+  --warn-bg:#2e1e00; --warn-text:#ffb766;
+  --danger-bg:#2e1010; --danger-text:#ff8080; --danger-border:rgba(255,128,128,0.3);
+  --info-bg:#101e30; --info-text:#7aabf7;
+  --double-bg:#2a2000; --double-text:#ffd070; --double-border:#a07800;
+}}
+body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;background:var(--bg2);color:var(--text);min-height:100vh;}
+header{background:var(--bg);border-bottom:0.5px solid var(--border2);padding:1rem 1.5rem;display:flex;align-items:flex-start;justify-content:space-between;flex-wrap:wrap;gap:10px;}
+header h1{font-size:17px;font-weight:600;}
+header p{font-size:13px;color:var(--text2);margin-top:2px;}
+.hdr-right{display:flex;flex-direction:column;gap:8px;align-items:flex-end;}
+.cycle-picker{display:flex;align-items:center;gap:8px;flex-shrink:0;}
+.cycle-picker label{font-size:13px;color:var(--text2);white-space:nowrap;}
+select,input[type=number]{font-family:inherit;font-size:13px;padding:5px 10px;border-radius:var(--radius-sm);border:0.5px solid var(--border2);background:var(--bg);color:var(--text);cursor:pointer;}
+.qty-row{display:flex;align-items:center;gap:10px;flex-wrap:wrap;}
+.qty-row label{font-size:13px;color:var(--text2);white-space:nowrap;}
+.qty-row input[type=number]{width:70px;cursor:text;}
+.qty-lbl{font-size:12px;color:var(--text3);}
+.tabs{display:flex;gap:4px;padding:1rem 1.5rem 0;}
+.tab{padding:8px 16px;border-radius:var(--radius-sm) var(--radius-sm) 0 0;border:0.5px solid var(--border);border-bottom:none;background:var(--bg3);cursor:pointer;font-size:14px;color:var(--text2);font-family:inherit;}
+.tab.active{background:var(--bg);color:var(--text);font-weight:500;border-color:var(--border2);}
+.tab:hover:not(.active){background:var(--bg2);}
+.content{background:var(--bg);border:0.5px solid var(--border2);border-radius:0 var(--radius) var(--radius) var(--radius);margin:0 1.5rem 2rem;padding:1.25rem;}
+.section{display:none;}
+.section.active{display:block;}
+.week-nav{display:flex;gap:8px;margin-bottom:1.25rem;flex-wrap:wrap;align-items:center;}
+.week-btn{padding:6px 14px;border-radius:99px;border:0.5px solid var(--border2);background:transparent;cursor:pointer;font-size:13px;color:var(--text2);font-family:inherit;}
+.week-btn.active{background:var(--accent-bg);color:var(--accent-text);border-color:var(--accent-text);font-weight:500;}
+.week-label{font-size:12px;color:var(--text3);margin-left:auto;}
+.day-grid{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:8px;}
+@media(max-width:640px){.day-grid{grid-template-columns:1fr 1fr;}}
+.day-card{background:var(--bg2);border:0.5px solid var(--border);border-radius:var(--radius);padding:12px;cursor:pointer;}
+.day-card:hover{border-color:var(--border2);}
+.day-card.selected{border-color:var(--accent-text);background:var(--accent-bg);}
+.day-name{font-size:10px;font-weight:600;color:var(--text3);text-transform:uppercase;letter-spacing:.07em;margin-bottom:3px;}
+.day-date{font-size:13px;font-weight:500;margin-bottom:8px;}
+.pill{font-size:11px;padding:2px 8px;border-radius:99px;display:inline-block;margin:2px 2px 2px 0;}
+.pill-b{background:var(--warn-bg);color:var(--warn-text);}
+.pill-l{background:var(--accent-bg);color:var(--accent-text);}
+.pill-alert{background:var(--danger-bg);color:var(--danger-text);}
+.pill-delivery{background:var(--info-bg);color:var(--info-text);}
+
+/* collapsible detail panel */
+.detail-panel{margin-top:1.25rem;border:0.5px solid var(--border2);border-radius:var(--radius);display:none;}
+.collapse-header{display:flex;align-items:center;justify-content:space-between;padding:14px 1.25rem;cursor:pointer;user-select:none;}
+.collapse-header:hover{background:var(--bg2);border-radius:var(--radius);}
+.collapse-title{font-size:17px;font-weight:600;}
+.collapse-arrow{font-size:14px;color:var(--text3);transition:transform 0.2s;}
+.collapse-arrow.open{transform:rotate(180deg);}
+.collapse-body{padding:0 1.25rem 1.25rem;}
+
+.notice{padding:10px 14px;border-radius:var(--radius-sm);font-size:14px;margin-bottom:10px;}
+.notice-alert{background:var(--danger-bg);color:var(--danger-text);}
+.notice-delivery{background:var(--info-bg);color:var(--info-text);}
+.detail-2col{display:grid;grid-template-columns:1fr 1fr;gap:1.25rem;margin-bottom:1.25rem;}
+@media(max-width:560px){.detail-2col{grid-template-columns:1fr;}}
+.detail-label{font-size:11px;font-weight:600;color:var(--text3);text-transform:uppercase;letter-spacing:.07em;margin-bottom:8px;}
+.detail-item{font-size:14px;padding:5px 0;border-bottom:0.5px solid var(--border);}
+.detail-item:last-child{border-bottom:none;}
+.check-item{display:flex;align-items:flex-start;gap:10px;padding:7px 0;border-bottom:0.5px solid var(--border);font-size:14px;}
+.check-item:last-child{border-bottom:none;}
+.check-item input[type=checkbox]{width:16px;height:16px;margin-top:1px;cursor:pointer;flex-shrink:0;accent-color:var(--accent);}
+.check-item.done label{text-decoration:line-through;color:var(--text3);}
+.check-item label{cursor:pointer;flex:1;}
+.check-item .del-task{background:none;border:none;cursor:pointer;font-size:14px;color:var(--text3);padding:0 2px;line-height:1;flex-shrink:0;}
+.check-item .del-task:hover{color:var(--danger-text);}
+.check-item.system-task label{color:var(--danger-text);}
+.check-item.system-task{background:var(--danger-bg);border-radius:var(--radius-sm);padding:7px 10px;margin-bottom:4px;border:0.5px solid var(--danger-border);}
+.check-item.system-task.done label{color:var(--text3);}
+.check-item.warn-task label{color:var(--warn-text);}
+.check-item.warn-task{background:var(--warn-bg);border-radius:var(--radius-sm);padding:7px 10px;margin-bottom:4px;border:0.5px solid rgba(122,58,0,0.25);}
+.check-item.warn-task.done label{color:var(--text3);}
+
+.add-task-row{display:flex;gap:8px;margin-top:10px;}
+.add-task-row input[type=text]{flex:1;font-family:inherit;font-size:14px;padding:7px 10px;border-radius:var(--radius-sm);border:0.5px solid var(--border2);background:var(--bg);color:var(--text);}
+.add-task-row button{padding:7px 14px;border-radius:var(--radius-sm);border:0.5px solid var(--border2);background:var(--bg);color:var(--text);cursor:pointer;font-family:inherit;font-size:13px;white-space:nowrap;}
+.add-task-row button:hover{background:var(--bg2);}
+
+.progress-bar{height:3px;background:var(--bg3);border-radius:99px;margin-top:6px;overflow:hidden;}
+.progress-fill{height:100%;background:var(--accent);border-radius:99px;transition:width 0.3s;}
+.progress-label{font-size:12px;color:var(--text3);margin-top:4px;margin-bottom:10px;}
+.reset-btn{font-size:12px;color:var(--text3);background:none;border:none;cursor:pointer;font-family:inherit;padding:0;text-decoration:underline;}
+
+/* cashier collapsible */
+.cheat-entry{border:0.5px solid var(--border);border-radius:var(--radius);margin-bottom:8px;background:var(--bg2);overflow:hidden;}
+.cheat-header{display:flex;align-items:center;justify-content:space-between;padding:12px 14px;cursor:pointer;user-select:none;}
+.cheat-header:hover{background:var(--bg3);}
+.cheat-title{font-size:14px;font-weight:600;}
+.cheat-body{padding:0 14px 14px;display:none;}
+.cheat-body.open{display:block;}
+.cheat-check{font-size:14px;margin-bottom:4px;}
+.cheat-sides{font-size:13px;color:var(--text2);margin-bottom:6px;}
+.cheat-reject{font-size:13px;color:var(--danger-text);background:var(--danger-bg);padding:7px 10px;border-radius:var(--radius-sm);}
+
+/* order collapsible */
+.order-section{margin-bottom:10px;border:0.5px solid var(--border2);border-radius:var(--radius);overflow:hidden;}
+.order-header{display:flex;align-items:flex-start;justify-content:space-between;padding:14px;cursor:pointer;user-select:none;gap:12px;}
+.order-header:hover{background:var(--bg2);}
+.order-header-left{flex:1;min-width:0;}
+.order-header-title{font-size:15px;font-weight:600;}
+.order-header-sub{font-size:13px;color:var(--text2);margin-top:2px;}
+.order-header-meta{display:flex;align-items:center;gap:10px;flex-shrink:0;}
+.order-body{padding:0 14px 14px;display:none;}
+.order-body.open{display:block;}
+.order-group-label{font-size:11px;font-weight:600;color:var(--text3);text-transform:uppercase;letter-spacing:.07em;margin:12px 0 4px;}
+.order-row{display:flex;align-items:flex-start;gap:10px;padding:7px 0;border-bottom:0.5px solid var(--border);}
+.order-row:last-child{border-bottom:none;}
+.order-row input[type=checkbox]{width:16px;height:16px;margin-top:2px;cursor:pointer;flex-shrink:0;accent-color:var(--accent);}
+.order-row-body{flex:1;min-width:0;}
+.order-row.done .order-item-name{text-decoration:line-through;color:var(--text3);}
+.order-item-name{font-size:14px;color:var(--text);cursor:pointer;}
+.order-item-used{font-size:12px;color:var(--text2);margin-top:3px;display:flex;flex-wrap:wrap;gap:4px;align-items:center;}
+.used-tag{font-size:11px;padding:1px 8px;border-radius:99px;background:var(--bg3);color:var(--text2);border:0.5px solid var(--border2);white-space:nowrap;}
+.double-badge{font-size:11px;font-weight:600;padding:2px 9px;border-radius:99px;background:var(--double-bg);color:var(--double-text);border:0.5px solid var(--double-border);white-space:nowrap;}
+.legend{display:flex;align-items:center;gap:8px;margin-bottom:1rem;padding:10px 14px;background:var(--double-bg);border:0.5px solid var(--double-border);border-radius:var(--radius-sm);font-size:13px;color:var(--double-text);}
+.cycle-banner{background:var(--info-bg);border:0.5px solid var(--border2);border-radius:var(--radius-sm);padding:8px 14px;margin-bottom:1.25rem;font-size:13px;color:var(--info-text);}
+.progress-pill{font-size:11px;padding:2px 9px;border-radius:99px;background:var(--bg3);color:var(--text2);white-space:nowrap;border:0.5px solid var(--border);}
+.progress-pill.done-all{background:var(--accent-bg);color:var(--accent-text);border-color:var(--accent-text);}
+.add-order-row{display:flex;gap:8px;margin-top:10px;}
+.add-order-row input[type=text]{flex:1;font-family:inherit;font-size:14px;padding:7px 10px;border-radius:var(--radius-sm);border:0.5px solid var(--border2);background:var(--bg);color:var(--text);}
+.add-order-row button{padding:7px 14px;border-radius:var(--radius-sm);border:0.5px solid var(--border2);background:var(--bg);color:var(--text);cursor:pointer;font-family:inherit;font-size:13px;}
+.add-order-row button:hover{background:var(--bg2);}
+.order-custom-row{display:flex;align-items:flex-start;gap:10px;padding:7px 0;border-bottom:0.5px solid var(--border);}
+.order-custom-row .del-task{background:none;border:none;cursor:pointer;font-size:14px;color:var(--text3);padding:0 2px;flex-shrink:0;}
+.order-custom-row .del-task:hover{color:var(--danger-text);}
+.order-custom-row.done .order-item-name{text-decoration:line-through;color:var(--text3);}
+/* inventory */
+.inv-row{display:flex;align-items:center;gap:10px;margin-top:5px;flex-wrap:wrap;}
+.inv-field{display:flex;align-items:center;gap:5px;}
+.inv-field label{font-size:11px;color:var(--text3);white-space:nowrap;}
+.inv-field input[type=number]{width:66px;font-size:13px;padding:3px 8px;border-radius:var(--radius-sm);border:0.5px solid var(--border2);background:var(--bg2);color:var(--text);cursor:text;-moz-appearance:textfield;}
+.inv-field input[type=number]::-webkit-outer-spin-button,.inv-field input[type=number]::-webkit-inner-spin-button{-webkit-appearance:none;}
+.inv-field input[type=number]:focus{outline:none;border-color:var(--accent);background:var(--bg);}
+.qty-chip{font-size:12px;font-weight:600;padding:3px 10px;border-radius:99px;white-space:nowrap;}
+.qty-chip.need{background:var(--danger-bg);color:var(--danger-text);}
+.qty-chip.ok{background:var(--accent-bg);color:var(--accent-text);}
+.qty-chip.exact{background:var(--bg3);color:var(--text2);}
+.qty-formula{font-size:11px;color:var(--text3);}
+.order-actions{display:flex;gap:8px;margin-bottom:1rem;flex-wrap:wrap;}
+.action-btn{display:inline-flex;align-items:center;gap:6px;padding:7px 14px;border-radius:var(--radius-sm);border:0.5px solid var(--border2);background:var(--bg);color:var(--text);cursor:pointer;font-family:inherit;font-size:13px;font-weight:500;}
+.action-btn:hover{background:var(--bg2);}
+.action-btn.primary{background:var(--accent-bg);color:var(--accent-text);border-color:var(--accent-text);}
+.action-btn.primary:hover{opacity:0.85;}
+.email-modal-bg{position:fixed;inset:0;background:rgba(0,0,0,0.45);z-index:100;display:flex;align-items:center;justify-content:center;}
+.email-modal{background:var(--bg);border-radius:var(--radius);padding:1.5rem;width:min(480px,90vw);border:0.5px solid var(--border2);}
+.email-modal h3{font-size:16px;font-weight:600;margin-bottom:1rem;}
+.email-modal label{font-size:13px;color:var(--text2);display:block;margin-bottom:4px;margin-top:10px;}
+.email-modal input[type=text],.email-modal input[type=email],.email-modal select{width:100%;font-family:inherit;font-size:14px;padding:8px 10px;border-radius:var(--radius-sm);border:0.5px solid var(--border2);background:var(--bg2);color:var(--text);}
+.email-modal input:focus{outline:none;border-color:var(--accent);}
+.modal-actions{display:flex;gap:8px;margin-top:1.25rem;justify-content:flex-end;}
+@media print{
+  .print-site-label{display:block!important;font-size:18px;font-weight:700;margin-bottom:6px;}
+  header,.tabs,.week-nav,.day-grid,.detail-panel,.cycle-banner,.legend,.order-actions,
+  .add-order-row,.order-custom-row .del-task,.inv-field,.qty-formula,
+  button,.reset-btn,.progress-bar,.progress-label,.progress-pill{display:none!important;}
+  body{background:white!important;color:black!important;}
+  .content{border:none!important;margin:0!important;padding:0!important;}
+  .section{display:block!important;}
+  #menu,#cashier{display:none!important;}
+  #orders{display:block!important;}
+  /* Hide all order sections by default, show only the targeted one */
+  .order-section{display:none!important;}
+  body[data-print-oi="0"] .order-section[data-oi="0"],
+  body[data-print-oi="1"] .order-section[data-oi="1"],
+  body[data-print-oi="2"] .order-section[data-oi="2"],
+  body[data-print-oi="3"] .order-section[data-oi="3"],
+  body[data-print-oi="4"] .order-section[data-oi="4"]{display:block!important;}
+  .order-header{padding:10px!important;border-bottom:1px solid #ccc!important;}
+  .order-body{display:block!important;padding:10px!important;}
+  .order-header-title{font-size:14px!important;font-weight:bold!important;}
+  .order-header-sub{font-size:12px!important;color:#666!important;}
+  .order-item-name{font-size:13px!important;}
+  .used-tag,.double-badge,.qty-chip{font-size:11px!important;}
+  .qty-chip.need{border:1px solid #c00!important;color:#c00!important;background:white!important;padding:1px 6px!important;border-radius:4px!important;}
+  .qty-chip.ok{border:1px solid #080!important;color:#080!important;background:white!important;padding:1px 6px!important;border-radius:4px!important;}
+  .inv-row{flex-wrap:nowrap!important;}
+  .inv-field label{color:#666!important;}
+}
+</style>
+</head>
+<body>
+<header>
+  <div>
+    <h1>&#127822; Pier — Summer School Menu</h1>
+    <p id="headerSub">50 breakfasts / 70 lunches per day</p>
+  </div>
+  <div class="hdr-right">
+    <div class="cycle-picker">
+      <label for="cycleSel">&#128197; Cycle starting:</label>
+      <select id="cycleSel" onchange="setCycle(this.value)">
+        <option value="2026-06-08">Cycle 1: Jun 8 – Jun 26</option>
+        <option value="2026-06-29">Cycle 2: Jun 29 – Jul 17</option>
+        <option value="2026-07-20">Cycle 3: Jul 20 – Aug 7</option>
+        <option value="2026-08-10">Cycle 4: Aug 10 – Aug 28</option>
+      </select>
+    </div>
+    <div class="qty-row">
+      <label>&#127830; Breakfasts/day:</label>
+      <input type="number" id="qtyB" value="50" min="1" max="999" onchange="updateQtys()">
+      <label>&#127829; Lunches/day:</label>
+      <input type="number" id="qtyL" value="70" min="1" max="999" onchange="updateQtys()">
+    </div>
+  </div>
+</header>
+<div class="tabs">
+  <button class="tab active" onclick="showTab('menu',this)">Daily menu</button>
+  <button class="tab" onclick="showTab('cashier',this)">Cashier guide</button>
+  <button class="tab" onclick="showTab('orders',this)">Order checklists</button>
+</div>
+<div class="content">
+  <div id="menu" class="section active">
+    <div class="cycle-banner" id="cycleBanner"></div>
+    <div class="week-nav">
+      <button class="week-btn active" id="wbtn0" onclick="setWeek(0,this)">Week 1</button>
+      <button class="week-btn" id="wbtn1" onclick="setWeek(1,this)">Week 2</button>
+      <button class="week-btn" id="wbtn2" onclick="setWeek(2,this)">Week 3</button>
+      <span class="week-label">Click a day for details &amp; prep tasks</span>
+    </div>
+    <div class="day-grid" id="dayGrid"></div>
+    <div class="detail-panel" id="detailPanel">
+      <div class="collapse-header" onclick="toggleDetailPanel()">
+        <span class="collapse-title" id="detailTitle"></span>
+        <span class="collapse-arrow open" id="detailArrow">&#9660;</span>
+      </div>
+      <div class="collapse-body" id="detailBody"></div>
+    </div>
+  </div>
+  <div id="cashier" class="section">
+    <div id="cashierList"></div>
+  </div>
+  <div id="orders" class="section">
+    <div class="print-site-label" style="display:none;">&#127822; Pier — Summer School Menu</div>
+    <div class="legend">&#9888; Items marked <strong style="margin:0 4px;">&#215;2+ days</strong> are used on multiple days — check quantity needed.</div>
+    <div id="orderList"></div>
+  </div>
+</div>
+
+<!-- Email modal -->
+<div class="email-modal-bg" id="emailModalBg" style="display:none;" onclick="if(event.target===this)closeEmailModal()">
+  <div class="email-modal">
+    <h3>&#9993; Email an order</h3>
+    <label>Select order to send</label>
+    <select id="emailOrderSel"></select>
+    <label>To (email address)</label>
+    <input type="email" id="emailTo" placeholder="vendor@example.com">
+    <label>Subject</label>
+    <input type="text" id="emailSubject">
+    <div class="modal-actions">
+      <button class="action-btn" onclick="closeEmailModal()">Cancel</button>
+      <button class="action-btn primary" onclick="sendEmail()">Open in Gmail to review &amp; send &#8599;</button>
+    </div>
+  </div>
+</div>
+
+<script>
+// ── Date helpers ──────────────────────────────────────────────────────────────
+const DAYS=['Sun','Mon','Tue','Wed','Thu','Fri','Sat'];
+const MONTHS=['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+function parseLocal(s){const[y,m,d]=s.split('-').map(Number);return new Date(y,m-1,d);}
+function addDays(date,n){const d=new Date(date);d.setDate(d.getDate()+n);return d;}
+function fmt(date){return `${DAYS[date.getDay()]} ${MONTHS[date.getMonth()]} ${date.getDate()}`;}
+function fmtShort(date){return `${date.getMonth()+1}/${date.getDate()}`;}
+
+// ── State ─────────────────────────────────────────────────────────────────────
+let cycleStart=parseLocal('2026-06-08');
+let qtyB=50, qtyL=70;
+let currentWeek=0, selectedDay=null;
+const prepChecks={}, customTasks={}, taskDone={};
+const orderChecks={}, customOrderItems={}, customOrderDone={};
+const inventory={}; // key → on-hand qty entered by user
+let detailOpen=true;
+
+function cycleDate(wk,d){return addDays(cycleStart,wk*7+d);}
+function cd(wk,d){return cycleDate(wk,d);}
+function cycleKey(){return cycleStart.toISOString().slice(0,10);}
+
+// ── Menu templates ────────────────────────────────────────────────────────────
+const weekTemplates=[
+  [
+    {day:'Mon',alert:false,delivery:false,
+     breakfast:['Trix Cereal Bar (1 each)','Low Fat Mozzarella String Cheese (1 each)','Assorted Fruit Juice (1 each)','1% Low-fat Milk / Choc Milk'],
+     lunch:['Ham & American Cheese Sandwich','— Bun (1)','— Ham, 3 slices','— Cheese, 2 slices','— Mayo packet (1)','Fresh Broccoli Florets (68g / 2.4 oz bag)','Chilled Diced Pears','Milk'],
+     prepTemplate:['Pack {TUE} breakfast: {QB} Oatmeal Rounds, {QB} Craisins, {QB} Juices, Milks']},
+    {day:'Tue',alert:'Order food by end of day (for Thu & Fri)',delivery:false,
+     breakfast:['Banana Chocolate Chip Oatmeal Round (1 each)','Assorted Craisins (1 serving)','Assorted Fruit Juice (1 each)','1% Low-fat Milk / Choc Milk'],
+     lunch:['Chicken Nuggets, 5 per child ({QL5} total)','Lite Mozzarella String Cheese (1 each)','Barbecue Sauce packet (1 each)','Savory Green Beans (0.75 cups)','Fresh Red Delicious Apple (1 each)','Milk'],
+     prepTemplate:['Pack {WED} breakfast: {QB} Scooby Grahams, {QB} Apples, {QB} Juices, Milks','Bag {WED} lunch veggie: sliced cucumbers at 90g (3.2 oz) each — 12 lbs total','Bag {WED} lunch fruit: Fresh Orange Wedges ({QL} bags) — 1 orange per bag']},
+    {day:'Wed',alert:'Order milk by end of day (for Thu delivery next week)',delivery:'Delivery day — Thu/Fri food arriving',
+     breakfast:['Scooby Doo Graham Crackers (1 each)','Fresh Red Delicious Apple (1 each)','Assorted Fruit Juice (1 each)','1% Low-fat Milk / Choc Milk'],
+     lunch:['Cereal, Yogurt & Cheese Fun Lunch','— Trix Cereal ({QL} total)','— Yogurt ({QL} total)','— String Cheese ({QL} total)','Sliced Cucumbers (90g / 3.2 oz bags)','Fresh Orange Wedges ({QL} bags)','Milk'],
+     prepTemplate:['Pack {THU} breakfast immediately: {QB} Blueberry Muffins, {QB} Raisins, Juices']},
+    {day:'Thu',alert:'Order food by end of day (for Mon/Tue/Wed next week)',delivery:false,
+     breakfast:['Whole Grain Blueberry Muffin (1 each)','Raisins (1 packet)','Assorted Fruit Juice (1 each)','1% Low-fat Milk / Choc Milk'],
+     lunch:['Classic American Cheeseburger','— Bun ({QL} total)','— Beef Patty ({QL} total)','— Cheese slice ({QL} total)','— Ketchup packet ({QL} total)','Seasoned Mixed Vegetables (0.75 cups)','Rosy Applesauce (0.75 cups) — 10 jars, mix in 1 gelatin packet','Milk'],
+     prepTemplate:['Pack {FRI} breakfast: {QB} Benefit Bars, {QB} Peach Cups, {QB} Juices, Milks','Bag {FRI} lunch veggie: baby carrots at 85g (3.0 oz) each — 11.2 lbs total']},
+    {day:'Fri',alert:false,delivery:'Delivery day — next week Mon/Tue/Wed food arriving',
+     breakfast:['Banana Chocolate Chunk BeneFIT Bar (1 each)','Peaches in Extra Light Syrup (1 each)','Assorted Fruit Juice (1 each)','1% Low-fat Milk / Choc Milk'],
+     lunch:['Build Your Own Pizza Fun Lunch','— Flatbread, 4 quarters per serving','— Pizza Sauce cup (2 oz each, 2 cans total)','— Shredded Mozzarella Cheese (2 oz each)','Fresh Carrots (85g / 3.0 oz bags)','Mixed Berries (1 each)','Milk'],
+     prepTemplate:['Pack next {MON2} breakfast: {QB} CTC Bars, {QB} String Cheese, Juices','Bag {MON2} lunch veggie: grape tomatoes at 114g (4.0 oz) each — 15 lbs total','Pull Mixed Berries from freezer to thaw before lunch service']}
+  ],
+  [
+    {day:'Mon',alert:false,delivery:false,
+     breakfast:['Cinnamon Toast Crunch Cereal Bar (1 each)','Low Fat Mozzarella String Cheese (1 each)','Assorted Fruit Juice (1 each)','1% Low-fat Milk / Choc Milk'],
+     lunch:['Turkey and Cheese Sandwich','— Bun (1)','— Turkey, 3 slices ({QL3} total)','— Cheese, 2 slices ({QL2} total)','— Mayo Light packet ({QL} total)','Fresh Grape Tomatoes (114g / 4.0 oz bags)','Chilled Mixed Fruit (0.75 cups) — 5 cans','Milk'],
+     prepTemplate:['Pack {TUE} breakfast: {QB} Pop-Tarts, {QB} Craisins, {QB} Juices, Milks']},
+    {day:'Tue',alert:'Order food by end of day (for Thu & Fri)',delivery:false,
+     breakfast:['Frosted Strawberry Pop-Tart (1 each)','Assorted Craisins (1 serving)','Assorted Fruit Juice (1 each)','1% Low-fat Milk / Choc Milk'],
+     lunch:['Cheese Stuffed Breadsticks, 2 per child ({QL2} total)','Marinara Sauce packet (1 each)','Steamed Peas (0.75 cups)','Cinnamon Applesauce (0.75 cups) — 10 jars','Milk'],
+     prepTemplate:['Pack {WED} breakfast: {QB} Bug Bites Grahams, {QB} Apples, {QB} Juices','Bag {WED} lunch veggie: baby carrots at 85g (3.0 oz) each — 11.2 lbs total','Bag {WED} lunch fruit: Fresh Orange Wedges ({QL} bags) — 1 orange per bag']},
+    {day:'Wed',alert:'Order milk by end of day (for Thu delivery next week)',delivery:'Delivery day — Thu/Fri food arriving',
+     breakfast:['WG Banana Muffin (1 each)','Raisins (1 packet)','Assorted Fruit Juice (1 each)','1% Low-fat Milk / Choc Milk'],
+     lunch:['Cereal, Yogurt & Cheese Fun Lunch','— Cocoa Puffs Cereal ({QL} total)','— Yogurt ({QL} total)','— String Cheese ({QL} total)','Fresh Carrots (85g / 3.0 oz bags)','Fresh Orange Wedges ({QL} bags)','Milk'],
+     prepTemplate:['Pack {THU} breakfast immediately: {QB} WG Banana Muffins, {QB} Raisins, Juices']},
+    {day:'Thu',alert:'Order food by end of day (for Mon/Tue/Wed next week)',delivery:false,
+     breakfast:['WG Banana Muffin (1 each)','Raisins (1 each)','Assorted Fruit Juice (1 each)','1% Low-fat Milk / Choc Milk'],
+     lunch:['Turkey Hot Dog on a Bun','— Hot Dog ({QL} total)','— Bun ({QL} total)','— Ketchup packet ({QL} total)','Seasoned Corn (0.75 cups)','Fresh Red Delicious Apple (1 each)','Milk'],
+     prepTemplate:['Pack {FRI} breakfast: {QB} French Toast Bars, {QB} Mixed Berries, Juices','Bag {FRI} lunch veggie: sliced cucumbers at 90g (3.2 oz) each — 12 lbs total','&#9888;&#65039; FROZEN BERRIES ISSUE: Mixed Berries Cups on {FRI} breakfast — only 1 hr thaw time (arrive 8am, serve 9am). Plan needed: thaw overnight in fridge? Sub fresh berries?']},
+    {day:'Fri',alert:false,delivery:'Delivery day — next week Mon/Tue/Wed food arriving',
+     breakfast:['French Toast BeneFIT Bar (1 each)','Mixed Berries Cup (1 each)','Assorted Fruit Juice (1 each)','1% Low-fat Milk / Choc Milk'],
+     lunch:['Nachos, Cheese, & Salsa Fun Lunch','— Nacho Chips ({QL} total)','— Cheese Sauce ({QL} total)','— Salsa ({QL} total)','— Sour Cream ({QL} total)','Sliced Cucumbers (90g / 3.2 oz bags)','Mixed Berries (1 each)','Milk'],
+     prepTemplate:['Pack next {MON2} breakfast: {QB} Cocoa Puffs Bars, {QB} String Cheese, Juices','Bag {MON2} lunch veggie: celery sticks at 75g (2.6 oz) each — 10 lbs total','Pull Mixed Berries from freezer to thaw before lunch service']}
+  ],
+  [
+    {day:'Mon',alert:false,delivery:false,
+     breakfast:['Cocoa Puffs Cereal Bar (1 each)','Low Fat Mozzarella String Cheese (1 each)','Assorted Fruit Juice (1 each)','1% Low-fat Milk / Choc Milk'],
+     lunch:['Salami & Cheese Sandwich','— Salami, 6 slices ({QL6} total)','— Cheese, 2 slices ({QL2} total)','— Bun ({QL} total)','Fresh Celery Sticks (75g / 2.6 oz bags)','Apple Cinnamon Slices (0.75 cups) — 5 cans','Milk'],
+     prepTemplate:['Pack {TUE} breakfast: {QB} Breakfast Rounds, {QB} Craisins, {QB} Juices']},
+    {day:'Tue',alert:'Order food by end of day (for Thu & Fri)',delivery:false,
+     breakfast:['Chocolate Chip Ultimate Breakfast Round (1 each)','Assorted Craisins (1 serving)','Assorted Fruit Juice (1 each)','1% Low-fat Milk / Choc Milk'],
+     lunch:['Cheese Pizza (1 each = {QL} total)','Seasoned Carrots (0.75 cups)','Mixed Berries (1 each)','Milk'],
+     prepTemplate:['Pack {WED} breakfast: {QB} Tiger Grahams, {QB} Apples, {QB} Juices','Bag {WED} lunch veggie: sliced cucumbers at 90g (3.2 oz) each — 12 lbs total','Pull Mixed Berries from freezer to thaw before lunch service']},
+    {day:'Wed',alert:'Order milk by end of day (for Thu delivery next week)',delivery:'Delivery day — Thu/Fri food arriving · FIELD TRIP (48 kids)',
+     breakfast:['Tiger Graham Crackers (1 each)','Fresh Red Delicious Apple (1 each)','Assorted Fruit Juice (1 each)','1% Low-fat Milk / Choc Milk'],
+     lunch:['Cereal, Yogurt & Cheese Fun Lunch','— Cinnamon Toast Cereal ({QL} total)','— Yogurt ({QL} total)','— String Cheese ({QL} total)','Sliced Cucumbers (90g / 3.2 oz bags)','Rosy Applesauce (0.75 cups) — 10 jars, mix in 1 gelatin packet','Milk'],
+     prepTemplate:['Pack {THU} breakfast immediately: {QB} Choc Chip Muffins, {QB} Raisins, Juices']},
+    {day:'Thu',alert:'Place CYCLE BRIDGE ORDER by end of day — covers Mon/Tue/Wed of next cycle (same items as Order 2)',delivery:false,
+     breakfast:['Chocolate Chip Muffin (1 each)','Raisins (1 packet)','Assorted Fruit Juice (1 each)','1% Low-fat Milk / Choc Milk'],
+     lunch:['Crispy Chicken Patty Sandwich','— Bun ({QL} total)','— Chicken Patty ({QL} total)','— Barbecue Sauce (1 each = {QL} total)','BBQ Baked Beans (0.75 cups) — 5 cans + BBQ sauce to season','Fresh Pear (1 each)','Milk'],
+     prepTemplate:['Pack {FRI} breakfast: {QB} Cocoa Chip Bars, {QB} Pear Cups, {QB} Juices','Bag {FRI} lunch veggie: green pepper strips at 69g (2.4 oz) each — 9.1 lbs total','&#9888;&#65039; CYCLE BRIDGE ORDER — order same items as Order 2 (Cinnamon Toast Crunch Bars, String Cheese, Pop-Tarts, Craisins, Bug Bites Grahams, Apples, Juice, Sandwich Buns, Cheese, Turkey, Mayo, Grape Tomatoes, Mixed Fruit, Breadsticks, Marinara, Peas, Cinnamon Applesauce, Cocoa Puffs, Yogurt, Baby Carrots, Oranges). Request delivery Fri {FRI}.']},
+    {day:'Fri',alert:false,delivery:'Cycle bridge delivery — stocks Mon/Tue/Wed of next cycle',
+     breakfast:['Cocoa Chip BeneFIT Bar (1 each)','Diced Pears in Extra Light Syrup (1 each)','Assorted Fruit Juice (1 each)','1% Low-fat Milk / Choc Milk'],
+     lunch:['PB&J and Cheese Fun Lunch','— PB&J ({QL} total)','— String Cheese ({QL} total)','— Cheddar Goldfish Crackers ({QL} total)','Fresh Green Pepper Strips (69g / 2.4 oz bags)','Chilled Peaches (0.75 cups) — 5 cans','Milk'],
+     prepTemplate:['Receive &amp; unpack cycle bridge delivery — verify all Mon/Tue/Wed items on hand','Pack next Mon breakfast: {QB} Trix Cereal Bars, {QB} String Cheese, {QB} Juices, Milks','Bag Mon lunch veggie: Fresh Broccoli Florets at 68g (2.4 oz) each — 9 lbs total','&#128197; Switch app to Cycle 2 (Jun 29 – Jul 17) using the Cycle Starting dropdown in the top right']}
+  ]
+];
+
+// Which days have an order deadline? wk+d → orderTemplateIndex (for the system task)
+// orderTemplates[i].orderDay = the day the order must be placed
+const orderDeadlineMap={
+  '0-1':0, '0-3':1, '1-1':2, '1-3':3, '2-1':4, '2-3':5
+};
+// Milk order is due every Wednesday (wk 0,1,2 → day index 2)
+const milkDeadlineDays={'0-2':true,'1-2':true,'2-2':true};
+function milkTaskKey(wk,d){return `milktask-${cycleKey()}-${wk}-${d}`;}
+
+// mealType: 'B'=breakfast qty, 'L'=lunch qty
+// qtyPer: multiplier per person (e.g. salami=6 slices, breadsticks=2)
+// usedOn: each entry contributes qtyPer × (B or L qty) to total needed
+const orderTemplates=[
+  {orderDay:{wk:0,d:1},deliverDay:{wk:0,d:2},coversDays:[{wk:0,d:3},{wk:0,d:4}],
+   breakfast:[
+    {name:'WG Blueberry Muffins',             mealType:'B',qtyPer:1, usedOn:[{wk:0,d:3,meal:'Breakfast'}]},
+    {name:'Raisin Packets',                   mealType:'B',qtyPer:1, usedOn:[{wk:0,d:3,meal:'Breakfast'}]},
+    {name:'Banana Choc Chunk BeneFIT Bars',   mealType:'B',qtyPer:1, usedOn:[{wk:0,d:4,meal:'Breakfast'}]},
+    {name:'Peach Cups',                       mealType:'B',qtyPer:1, usedOn:[{wk:0,d:4,meal:'Breakfast'}]},
+    {name:'Assorted Fruit Juice',             mealType:'B',qtyPer:1, usedOn:[{wk:0,d:3,meal:'Breakfast'},{wk:0,d:4,meal:'Breakfast'}]},
+   ],lunch:[
+    {name:'Hamburger Buns',                   mealType:'L',qtyPer:1, usedOn:[{wk:0,d:3,meal:'Cheeseburger'}]},
+    {name:'Hamburger Patties',                mealType:'L',qtyPer:1, usedOn:[{wk:0,d:3,meal:'Cheeseburger'}]},
+    {name:'Sliced Cheese',                    mealType:'L',qtyPer:1, usedOn:[{wk:0,d:3,meal:'Cheeseburger'}]},
+    {name:'Ketchup Packets',                  mealType:'L',qtyPer:1, usedOn:[{wk:0,d:3,meal:'Cheeseburger'}]},
+    {name:'Seasoned Mixed Vegetables',        mealType:'L',qtyPer:1, usedOn:[{wk:0,d:3,meal:'Lunch side'}]},
+    {name:"Mott's Applesauce (48 oz jars)",   mealType:'L',qtyPer:1, usedOn:[{wk:0,d:3,meal:'Lunch side'}]},
+    {name:'Gelatin packets (for Rosy Applesauce)',mealType:'L',flatQty:1,qtyPer:1,usedOn:[{wk:0,d:3,meal:'Mixed into Rosy Applesauce'}]},
+    {name:'Pizza Fun Lunch Kits (Flatbread, Pizza Sauce, Mozz Cheese)',mealType:'L',qtyPer:1,usedOn:[{wk:0,d:4,meal:'Build-Your-Own Pizza'}]},
+    {name:'Baby Carrots',                     mealType:'L',qtyPer:1, usedOn:[{wk:0,d:4,meal:'Lunch side'}]},
+    {name:'Mixed Berries',                    mealType:'L',qtyPer:1, usedOn:[{wk:0,d:4,meal:'Lunch side'}]},
+   ]},
+  {orderDay:{wk:0,d:3},deliverDay:{wk:0,d:4},coversDays:[{wk:1,d:0},{wk:1,d:1},{wk:1,d:2}],
+   breakfast:[
+    {name:'Cinnamon Toast Crunch Cereal Bars', mealType:'B',qtyPer:1, usedOn:[{wk:1,d:0,meal:'Breakfast'}]},
+    {name:'Low-Fat Mozzarella String Cheese',  mealType:'B',qtyPer:1, usedOn:[{wk:1,d:0,meal:'Breakfast'},{wk:1,d:2,meal:'Cereal Fun Lunch'}]},
+    {name:'Frosted Strawberry Pop-Tarts',      mealType:'B',qtyPer:1, usedOn:[{wk:1,d:1,meal:'Breakfast'}]},
+    {name:'Assorted Craisins',                 mealType:'B',qtyPer:1, usedOn:[{wk:1,d:1,meal:'Breakfast'}]},
+    {name:'Bug Bites Graham Crackers',         mealType:'B',qtyPer:1, usedOn:[{wk:1,d:2,meal:'Breakfast'}]},
+    {name:'Fresh Red Delicious Apples',        mealType:'B',qtyPer:1, usedOn:[{wk:1,d:2,meal:'Breakfast'}]},
+    {name:'Assorted Fruit Juice',              mealType:'B',qtyPer:1, usedOn:[{wk:1,d:0,meal:'Breakfast'},{wk:1,d:1,meal:'Breakfast'},{wk:1,d:2,meal:'Breakfast'}]},
+   ],lunch:[
+    {name:'Sandwich Buns',                     mealType:'L',qtyPer:1, usedOn:[{wk:1,d:0,meal:'Turkey & Cheese Sandwich'}]},
+    {name:'Sliced Cheese',                     mealType:'L',qtyPer:2, usedOn:[{wk:1,d:0,meal:'Turkey & Cheese Sandwich'}]},
+    {name:'Deli Turkey',                       mealType:'L',qtyPer:3, usedOn:[{wk:1,d:0,meal:'Turkey & Cheese Sandwich'}]},
+    {name:'Mayonnaise Packets (Light)',         mealType:'L',qtyPer:1, usedOn:[{wk:1,d:0,meal:'Turkey & Cheese Sandwich'}]},
+    {name:'Grape Tomatoes',                    mealType:'L',qtyPer:1, usedOn:[{wk:1,d:0,meal:'Lunch side'}]},
+    {name:'Chilled Mixed Fruit',               mealType:'L',qtyPer:1, usedOn:[{wk:1,d:0,meal:'Lunch side'}]},
+    {name:'Cheese Stuffed Breadsticks (2 each)',mealType:'L',qtyPer:2,usedOn:[{wk:1,d:1,meal:'Main entree'}]},
+    {name:'Marinara Sauce Packets',            mealType:'L',qtyPer:1, usedOn:[{wk:1,d:1,meal:'Breadstick side'}]},
+    {name:'Steamed Peas',                      mealType:'L',qtyPer:1, usedOn:[{wk:1,d:1,meal:'Lunch side'}]},
+    {name:'Cinnamon Applesauce Cups',          mealType:'L',qtyPer:1, usedOn:[{wk:1,d:1,meal:'Lunch side'}]},
+    {name:'Cocoa Puffs Cereal',                mealType:'L',qtyPer:1, usedOn:[{wk:1,d:2,meal:'Cereal Fun Lunch'}]},
+    {name:'Yogurt',                            mealType:'L',qtyPer:1, usedOn:[{wk:1,d:2,meal:'Cereal Fun Lunch'}]},
+    {name:'Baby Carrots',                      mealType:'L',qtyPer:1, usedOn:[{wk:1,d:2,meal:'Lunch side'}]},
+    {name:'Fresh Oranges',                     mealType:'L',qtyPer:1, usedOn:[{wk:1,d:2,meal:'Lunch side'}]},
+   ]},
+  {orderDay:{wk:1,d:1},deliverDay:{wk:1,d:2},coversDays:[{wk:1,d:3},{wk:1,d:4}],
+   breakfast:[
+    {name:'WG Banana Muffins',                mealType:'B',qtyPer:1, usedOn:[{wk:1,d:3,meal:'Breakfast'}]},
+    {name:'Raisin Packets',                   mealType:'B',qtyPer:1, usedOn:[{wk:1,d:3,meal:'Breakfast'}]},
+    {name:'French Toast BeneFIT Bars',        mealType:'B',qtyPer:1, usedOn:[{wk:1,d:4,meal:'Breakfast'}]},
+    {name:'Mixed Berries Cups',               mealType:'B',qtyPer:1, usedOn:[{wk:1,d:4,meal:'Breakfast'}]},
+    {name:'Assorted Fruit Juice',             mealType:'B',qtyPer:1, usedOn:[{wk:1,d:3,meal:'Breakfast'},{wk:1,d:4,meal:'Breakfast'}]},
+   ],lunch:[
+    {name:'Turkey Hot Dogs',                  mealType:'L',qtyPer:1, usedOn:[{wk:1,d:3,meal:'Turkey Hot Dog'}]},
+    {name:'Hot Dog Buns',                     mealType:'L',qtyPer:1, usedOn:[{wk:1,d:3,meal:'Turkey Hot Dog'}]},
+    {name:'Ketchup Packets',                  mealType:'L',qtyPer:1, usedOn:[{wk:1,d:3,meal:'Turkey Hot Dog'}]},
+    {name:'Seasoned Corn',                    mealType:'L',qtyPer:1, usedOn:[{wk:1,d:3,meal:'Lunch side'}]},
+    {name:'Fresh Red Delicious Apples',       mealType:'L',qtyPer:1, usedOn:[{wk:1,d:3,meal:'Lunch side'}]},
+    {name:'Nacho Fun Lunch Kits (Chips, Cheese, Salsa)',mealType:'L',qtyPer:1,usedOn:[{wk:1,d:4,meal:'Nachos Fun Lunch'}]},
+    {name:'Sour Cream packets',               mealType:'L',qtyPer:1, usedOn:[{wk:1,d:4,meal:'Nachos Fun Lunch'}]},
+    {name:'Sliced Cucumbers',                 mealType:'L',qtyPer:1, usedOn:[{wk:1,d:4,meal:'Lunch side'}]},
+    {name:'Mixed Berries',                    mealType:'L',qtyPer:1, usedOn:[{wk:1,d:4,meal:'Lunch side'}]},
+   ]},
+  {orderDay:{wk:1,d:3},deliverDay:{wk:1,d:4},coversDays:[{wk:2,d:0},{wk:2,d:1},{wk:2,d:2}],
+   breakfast:[
+    {name:'Cocoa Puffs Cereal Bars',          mealType:'B',qtyPer:1, usedOn:[{wk:2,d:0,meal:'Breakfast'}]},
+    {name:'Low-Fat Mozzarella String Cheese', mealType:'B',qtyPer:1, usedOn:[{wk:2,d:0,meal:'Breakfast'},{wk:2,d:2,meal:'Cereal Fun Lunch'}]},
+    {name:'Chocolate Chip Breakfast Rounds',  mealType:'B',qtyPer:1, usedOn:[{wk:2,d:1,meal:'Breakfast'}]},
+    {name:'Assorted Craisins',                mealType:'B',qtyPer:1, usedOn:[{wk:2,d:1,meal:'Breakfast'}]},
+    {name:'Tiger Graham Crackers',            mealType:'B',qtyPer:1, usedOn:[{wk:2,d:2,meal:'Breakfast'}]},
+    {name:'Fresh Red Delicious Apples',       mealType:'B',qtyPer:1, usedOn:[{wk:2,d:2,meal:'Breakfast'}]},
+    {name:'Assorted Fruit Juice',             mealType:'B',qtyPer:1, usedOn:[{wk:2,d:0,meal:'Breakfast'},{wk:2,d:1,meal:'Breakfast'},{wk:2,d:2,meal:'Breakfast'}]},
+   ],lunch:[
+    {name:'Salami',                           mealType:'L',qtyPer:6, usedOn:[{wk:2,d:0,meal:'Salami & Cheese Sandwich'}]},
+    {name:'Sliced Cheese',                    mealType:'L',qtyPer:2, usedOn:[{wk:2,d:0,meal:'Salami & Cheese Sandwich'}]},
+    {name:'Sandwich Buns',                    mealType:'L',qtyPer:1, usedOn:[{wk:2,d:0,meal:'Salami & Cheese Sandwich'}]},
+    {name:'Fresh Celery Sticks',              mealType:'L',qtyPer:1, usedOn:[{wk:2,d:0,meal:'Lunch side'}]},
+    {name:'Apple Cinnamon Slices',            mealType:'L',qtyPer:1, usedOn:[{wk:2,d:0,meal:'Lunch side'}]},
+    {name:'Pre-made Cheese Pizza',            mealType:'L',qtyPer:1, usedOn:[{wk:2,d:1,meal:'Main entree'}]},
+    {name:'Seasoned Carrots',                 mealType:'L',qtyPer:1, usedOn:[{wk:2,d:1,meal:'Lunch side'}]},
+    {name:'Mixed Berries',                    mealType:'L',qtyPer:1, usedOn:[{wk:2,d:1,meal:'Lunch side'}]},
+    {name:'Cinnamon Toast Cereal',            mealType:'L',qtyPer:1, usedOn:[{wk:2,d:2,meal:'Cereal Fun Lunch'}]},
+    {name:'Yogurt',                           mealType:'L',qtyPer:1, usedOn:[{wk:2,d:2,meal:'Cereal Fun Lunch'}]},
+    {name:'String Cheese',                    mealType:'L',qtyPer:1, usedOn:[{wk:2,d:2,meal:'Cereal Fun Lunch'}]},
+    {name:'Sliced Cucumbers',                 mealType:'L',qtyPer:1, usedOn:[{wk:2,d:2,meal:'Lunch side'}]},
+    {name:'Rosy Applesauce',                  mealType:'L',qtyPer:1, usedOn:[{wk:2,d:2,meal:'Lunch side'}]},
+    {name:'Gelatin packets (for Rosy Applesauce)',mealType:'L',flatQty:1,qtyPer:1,usedOn:[{wk:2,d:2,meal:'Mixed into Rosy Applesauce'}]},
+   ]},
+  {orderDay:{wk:2,d:1},deliverDay:{wk:2,d:2},coversDays:[{wk:2,d:3},{wk:2,d:4}],
+   breakfast:[
+    {name:'Chocolate Chip Muffins',           mealType:'B',qtyPer:1, usedOn:[{wk:2,d:3,meal:'Breakfast'}]},
+    {name:'Raisin Packets',                   mealType:'B',qtyPer:1, usedOn:[{wk:2,d:3,meal:'Breakfast'}]},
+    {name:'Cocoa Chip BeneFIT Bars',          mealType:'B',qtyPer:1, usedOn:[{wk:2,d:4,meal:'Breakfast'}]},
+    {name:'Diced Pears Cups',                 mealType:'B',qtyPer:1, usedOn:[{wk:2,d:4,meal:'Breakfast'}]},
+    {name:'Assorted Fruit Juice',             mealType:'B',qtyPer:1, usedOn:[{wk:2,d:3,meal:'Breakfast'},{wk:2,d:4,meal:'Breakfast'}]},
+   ],lunch:[
+    {name:'Crispy Chicken Patties',           mealType:'L',qtyPer:1, usedOn:[{wk:2,d:3,meal:'Chicken Patty Sandwich'}]},
+    {name:'Chicken Sandwich Buns',            mealType:'L',qtyPer:1, usedOn:[{wk:2,d:3,meal:'Chicken Patty Sandwich'}]},
+    {name:'Barbecue Sauce Packets',           mealType:'L',qtyPer:1, usedOn:[{wk:2,d:3,meal:'Chicken Patty Sandwich'}]},
+    {name:'BBQ Baked Beans (#10 Cans)',        mealType:'L',qtyPer:1, usedOn:[{wk:2,d:3,meal:'Lunch side'}]},
+    {name:'Fresh Pears',                      mealType:'L',qtyPer:1, usedOn:[{wk:2,d:3,meal:'Lunch side'}]},
+    {name:'PB&J and Cheese Fun Lunch Kits',   mealType:'L',qtyPer:1, usedOn:[{wk:2,d:4,meal:'PB&J Fun Lunch'}]},
+    {name:'Fresh Green Peppers',              mealType:'L',qtyPer:1, usedOn:[{wk:2,d:4,meal:'Lunch side'}]},
+    {name:'Chilled Peaches (#10 Cans)',        mealType:'L',qtyPer:1, usedOn:[{wk:2,d:4,meal:'Lunch side'}]},
+   ]}
+  ,
+  // ── ORDER 6: CYCLE BRIDGE — placed Thu Wk3, delivered Fri Wk3, covers Mon/Tue/Wed of NEXT CYCLE Wk1
+  // Identical items to Order 2. coversDays uses wk:0 to reference next cycle's Week 1.
+  {orderDay:{wk:2,d:3},deliverDay:{wk:2,d:4},coversDays:[{wk:0,d:0},{wk:0,d:1},{wk:0,d:2}],
+   _isBridgeOrder:true,
+   breakfast:[
+    {name:'Cinnamon Toast Crunch Cereal Bars', mealType:'B',qtyPer:1, usedOn:[{wk:0,d:0,meal:'Breakfast — next cycle Mon'}]},
+    {name:'Low-Fat Mozzarella String Cheese',  mealType:'B',qtyPer:1, usedOn:[{wk:0,d:0,meal:'Breakfast — next cycle Mon'},{wk:0,d:2,meal:'Cereal Fun Lunch — next cycle Wed'}]},
+    {name:'Frosted Strawberry Pop-Tarts',      mealType:'B',qtyPer:1, usedOn:[{wk:0,d:1,meal:'Breakfast — next cycle Tue'}]},
+    {name:'Assorted Craisins',                 mealType:'B',qtyPer:1, usedOn:[{wk:0,d:1,meal:'Breakfast — next cycle Tue'}]},
+    {name:'Bug Bites Graham Crackers',         mealType:'B',qtyPer:1, usedOn:[{wk:0,d:2,meal:'Breakfast — next cycle Wed'}]},
+    {name:'Fresh Red Delicious Apples',        mealType:'B',qtyPer:1, usedOn:[{wk:0,d:2,meal:'Breakfast — next cycle Wed'}]},
+    {name:'Assorted Fruit Juice',              mealType:'B',qtyPer:1, usedOn:[{wk:0,d:0,meal:'Breakfast'},{wk:0,d:1,meal:'Breakfast'},{wk:0,d:2,meal:'Breakfast'}]},
+   ],lunch:[
+    {name:'Sandwich Buns',                     mealType:'L',qtyPer:1, usedOn:[{wk:0,d:0,meal:'Turkey & Cheese Sandwich — next cycle Mon'}]},
+    {name:'Sliced Cheese',                     mealType:'L',qtyPer:2, usedOn:[{wk:0,d:0,meal:'Turkey & Cheese Sandwich — next cycle Mon'}]},
+    {name:'Deli Turkey',                       mealType:'L',qtyPer:3, usedOn:[{wk:0,d:0,meal:'Turkey & Cheese Sandwich — next cycle Mon'}]},
+    {name:'Mayonnaise Packets (Light)',         mealType:'L',qtyPer:1, usedOn:[{wk:0,d:0,meal:'Turkey & Cheese Sandwich — next cycle Mon'}]},
+    {name:'Grape Tomatoes',                    mealType:'L',qtyPer:1, usedOn:[{wk:0,d:0,meal:'Lunch side — next cycle Mon'}]},
+    {name:'Chilled Mixed Fruit',               mealType:'L',qtyPer:1, usedOn:[{wk:0,d:0,meal:'Lunch side — next cycle Mon'}]},
+    {name:'Cheese Stuffed Breadsticks (2 each)',mealType:'L',qtyPer:2,usedOn:[{wk:0,d:1,meal:'Main entree — next cycle Tue'}]},
+    {name:'Marinara Sauce Packets',            mealType:'L',qtyPer:1, usedOn:[{wk:0,d:1,meal:'Breadstick side — next cycle Tue'}]},
+    {name:'Steamed Peas',                      mealType:'L',qtyPer:1, usedOn:[{wk:0,d:1,meal:'Lunch side — next cycle Tue'}]},
+    {name:'Cinnamon Applesauce Cups',          mealType:'L',qtyPer:1, usedOn:[{wk:0,d:1,meal:'Lunch side — next cycle Tue'}]},
+    {name:'Cocoa Puffs Cereal',                mealType:'L',qtyPer:1, usedOn:[{wk:0,d:2,meal:'Cereal Fun Lunch — next cycle Wed'}]},
+    {name:'Yogurt',                            mealType:'L',qtyPer:1, usedOn:[{wk:0,d:2,meal:'Cereal Fun Lunch — next cycle Wed'}]},
+    {name:'Baby Carrots',                      mealType:'L',qtyPer:1, usedOn:[{wk:0,d:2,meal:'Lunch side — next cycle Wed'}]},
+    {name:'Fresh Oranges',                     mealType:'L',qtyPer:1, usedOn:[{wk:0,d:2,meal:'Lunch side — next cycle Wed'}]},
+   ]}
+];
+
+const cashierTemplate=[
+  {wk:0,d:0,entree:'Ham & Cheese Sandwich',check:'Look for the sandwich first. If they have it, they need any 1 side.',sides:'Milk, Broccoli, or Pears',reject:'Tray with just broccoli + pears + milk — missing grain and meat'},
+  {wk:0,d:1,entree:'Chicken Nuggets (5 each)',check:'Look for all 5 nuggets. If they have them, they need any 1 side.',sides:'Milk, String Cheese, Green Beans, or Apple',reject:'String Cheese + Green Beans + Apple + Milk — the 1 oz string cheese alone is too small to count as the meat component'},
+  {wk:0,d:2,entree:'Cereal, Yogurt & Cheese Fun Lunch',check:'Look for Trix Cereal AND Yogurt together. String cheese can help for meat if yogurt not finished.',sides:'Milk, Cucumbers, or Oranges',reject:'Just Cucumbers + Oranges + Milk — no grain or meat'},
+  {wk:0,d:3,entree:'Classic American Cheeseburger',check:'Look for the burger. Rosy Applesauce has gelatin mixed in — it is part of the applesauce side, not a separate item.',sides:'Milk, Mixed Veggies, or Rosy Applesauce',reject:'Just Veggies + Applesauce + Milk — no grain or meat'},
+  {wk:0,d:4,entree:'Build-Your-Own Pizza Fun Lunch',check:'Look for Flatbread AND Shredded Mozzarella Cheese together.',sides:'Pizza Sauce, Carrots, Berries, or Milk',reject:'Just Carrots + Berries + Milk — no grain or meat'},
+  {wk:1,d:0,entree:'Turkey & Cheese Sandwich',check:'Look for the sandwich first.',sides:'Milk, Grape Tomatoes, or Mixed Fruit',reject:'Tray with just tomatoes + fruit + milk — no sandwich'},
+  {wk:1,d:1,entree:'Cheese Stuffed Breadsticks (2 each)',check:'Look for both breadsticks — must have 2.',sides:'Marinara Sauce, Milk, Peas, or Applesauce',reject:'Just Peas + Applesauce + Milk — no breadsticks'},
+  {wk:1,d:2,entree:'Cereal, Yogurt & Cheese Fun Lunch',check:'Look for Cocoa Puffs Cereal AND Yogurt together.',sides:'Milk, Carrots, or Oranges',reject:'Just Carrots + Oranges + Milk — no cereal or yogurt'},
+  {wk:1,d:3,entree:'Turkey Hot Dog on a Bun',check:'Look for the hot dog on a bun.',sides:'Milk, Corn, or Apple',reject:'Just Corn + Apple + Milk — no hot dog'},
+  {wk:1,d:4,entree:'Nachos, Cheese, & Salsa Fun Lunch',check:'Look for Nacho Chips AND Cheese Sauce together.',sides:'Salsa, Sour Cream, Cucumbers, Berries, or Milk',reject:'Just Cucumbers + Berries + Milk — no chips and cheese'},
+  {wk:2,d:0,entree:'Salami & Cheese Sandwich',check:'Look for the sandwich first.',sides:'Milk, Celery Sticks, or Apple Cinnamon Slices',reject:'Tray with just celery + apples + milk — no sandwich'},
+  {wk:2,d:1,entree:'Cheese Pizza',check:'Look for the pizza slice first.',sides:'Milk, Seasoned Carrots, or Mixed Berries',reject:'Just Carrots + Berries + Milk — no pizza'},
+  {wk:2,d:2,entree:'Cereal, Yogurt & Cheese Fun Lunch',check:'Look for Cinnamon Toast Cereal AND Yogurt together. Rosy Applesauce has gelatin mixed in — it counts as the applesauce side.',sides:'Milk, Cucumbers, or Rosy Applesauce',reject:'Just Cucumbers + Applesauce + Milk — no cereal or yogurt'},
+  {wk:2,d:3,entree:'Crispy Chicken Patty Sandwich',check:'Look for the chicken sandwich.',sides:'Milk, BBQ Baked Beans, or Fresh Pear',reject:'Just Beans + Pear + Milk — no sandwich'},
+  {wk:2,d:4,entree:'PB&J and Cheese Fun Lunch',check:'Look for PB&J AND Goldfish Crackers together.',sides:'Milk, Green Pepper Strips, or Chilled Peaches',reject:'Just Peppers + Peaches + Milk — no PB&J or Goldfish'}
+];
+
+// ── Qty substitution ──────────────────────────────────────────────────────────
+function applyQty(str){
+  return str
+    .replace(/\{QB\}/g,qtyB)
+    .replace(/\{QL\}/g,qtyL)
+    .replace(/\{QL2\}/g,qtyL*2)
+    .replace(/\{QL3\}/g,qtyL*3)
+    .replace(/\{QL5\}/g,qtyL*5)
+    .replace(/\{QL6\}/g,qtyL*6);
+}
+
+// ── Prep template resolution ──────────────────────────────────────────────────
+function resolvePrep(template,wk,d){
+  const tue=fmt(cd(wk,1)),wed=fmt(cd(wk,2)),thu=fmt(cd(wk,3)),fri=fmt(cd(wk,4));
+  const nextMon=(wk<2)?fmt(cd(wk+1,0)):'(next cycle Mon)';
+  return applyQty(template
+    .replace(/{TUE}/g,tue).replace(/{WED}/g,wed)
+    .replace(/{THU}/g,thu).replace(/{FRI}/g,fri)
+    .replace(/{MON2}/g,nextMon));
+}
+
+function applyQtyToMenu(arr){ return arr.map(x=>applyQty(x)); }
+
+// ── System order-task key ─────────────────────────────────────────────────────
+function orderTaskKey(wk,d){ return `ordertask-${cycleKey()}-${wk}-${d}`; }
+
+// ── UI helpers ────────────────────────────────────────────────────────────────
+function updateQtys(){
+  qtyB=parseInt(document.getElementById('qtyB').value)||50;
+  qtyL=parseInt(document.getElementById('qtyL').value)||70;
+  document.getElementById('headerSub').textContent=`${qtyB} breakfasts / ${qtyL} lunches per day`;
+  if(selectedDay!==null) selectDay(selectedDay);
+  renderOrders();
+  // reopen any previously open order sections
+}
+function showTab(id,btn){
+  document.querySelectorAll('.section').forEach(s=>s.classList.remove('active'));
+  document.querySelectorAll('.tab').forEach(t=>t.classList.remove('active'));
+  document.getElementById(id).classList.add('active');
+  btn.classList.add('active');
+}
+function setCycle(val){
+  cycleStart=parseLocal(val);
+  selectedDay=null;
+  updateCycleBanner();
+  updateWeekBtns();
+  renderDays();
+  document.getElementById('detailPanel').style.display='none';
+  renderCashier();
+  renderOrders();
+  const end=addDays(cycleStart,18);
+  document.getElementById('headerSub').textContent=`${fmt(cycleStart)} – ${fmt(end)} · ${qtyB} breakfasts / ${qtyL} lunches per day`;
+}
+function updateCycleBanner(){
+  document.getElementById('cycleBanner').textContent=
+    `Cycle: Week 1 ${fmt(cd(0,0))}–${fmt(cd(0,4))} · Week 2 ${fmt(cd(1,0))}–${fmt(cd(1,4))} · Week 3 ${fmt(cd(2,0))}–${fmt(cd(2,4))}`;
+}
+function updateWeekBtns(){
+  [0,1,2].forEach(w=>{
+    const mon=fmt(cd(w,0)),fri=fmt(cd(w,4));
+    document.getElementById(`wbtn${w}`).textContent=`Week ${w+1}: ${mon.slice(4)}–${fri.slice(4)}`;
+  });
+}
+function setWeek(w,btn){
+  currentWeek=w; selectedDay=null;
+  document.querySelectorAll('.week-btn').forEach(b=>b.classList.remove('active'));
+  btn.classList.add('active');
+  renderDays();
+  document.getElementById('detailPanel').style.display='none';
+}
+function renderDays(){
+  const tpl=weekTemplates[currentWeek];
+  document.getElementById('dayGrid').innerHTML=tpl.map((d,i)=>{
+    const date=cd(currentWeek,i);
+    return `<div class="day-card${selectedDay===i?' selected':''}" onclick="selectDay(${i})">
+      <div class="day-name">${d.day}</div>
+      <div class="day-date">${fmt(date)}</div>
+      <span class="pill pill-b">Breakfast</span><br>
+      <span class="pill pill-l">Lunch</span>
+      ${d.alert?`<br><span class="pill pill-alert">&#9888; Order deadline</span>`:''}
+      ${d.delivery?`<br><span class="pill pill-delivery">&#128666; Delivery</span>`:''}
+    </div>`;
+  }).join('');
+}
+
+// ── Detail panel (collapsible) ────────────────────────────────────────────────
+function toggleDetailPanel(){
+  detailOpen=!detailOpen;
+  document.getElementById('detailBody').style.display=detailOpen?'block':'none';
+  const arr=document.getElementById('detailArrow');
+  arr.classList.toggle('open',detailOpen);
+}
+
+function mkPrepId(c,w,d,i){return `p-${c}-${w}-${d}-${i}`;}
+function mkCustomId(c,w,d,i){return `cu-${c}-${w}-${d}-${i}`;}
+
+function selectDay(i){
+  selectedDay=i; renderDays();
+  const tpl=weekTemplates[currentWeek][i];
+  const date=cd(currentWeek,i);
+  const panel=document.getElementById('detailPanel');
+  panel.style.display='block';
+  document.getElementById('detailTitle').textContent=`${tpl.day}, ${fmt(date)}`;
+  detailOpen=true;
+  document.getElementById('detailBody').style.display='block';
+  document.getElementById('detailArrow').classList.add('open');
+
+  const ck=cycleKey();
+  const wk=currentWeek;
+
+  // Build prep items: system order task (if this day has a deadline) + template tasks + custom tasks
+  let bodyHtml='';
+  if(tpl.alert) bodyHtml+=`<div class="notice notice-alert">&#9888; Order deadline: ${tpl.alert}</div>`;
+  if(tpl.delivery) bodyHtml+=`<div class="notice notice-delivery">&#128666; ${tpl.delivery}</div>`;
+
+  // Breakfast & Lunch cols
+  bodyHtml+=`<div class="detail-2col"><div><div class="detail-label">Breakfast items</div>`;
+  applyQtyToMenu(tpl.breakfast).forEach(x=>{bodyHtml+=`<div class="detail-item">${x}</div>`;});
+  bodyHtml+=`</div><div><div class="detail-label">Lunch items</div>`;
+  applyQtyToMenu(tpl.lunch).forEach(x=>{bodyHtml+=`<div class="detail-item">${x}</div>`;});
+  bodyHtml+=`</div></div>`;
+
+  // Collect all tasks for this day
+  const sysTasks=[];
+  const oKey=`${wk}-${i}`;
+  if(orderDeadlineMap[oKey]!==undefined){
+    const oi=orderDeadlineMap[oKey];
+    const oDate=fmt(cd(orderTemplates[oi].deliverDay.wk,orderTemplates[oi].deliverDay.d));
+    const coverDates=orderTemplates[oi].coversDays.map(c=>fmtShort(cd(c.wk,c.d))).join(' & ');
+    sysTasks.push({id:orderTaskKey(wk,i), label:`&#128722; Submit food order by end of day — delivered ${oDate}, covers ${coverDates}`});
+  }
+  if(milkDeadlineDays[oKey]){
+    const milkDeliverDate=fmt(cd(wk,3)); // Milk arrives Thursday
+    sysTasks.push({id:milkTaskKey(wk,i), label:`&#127868; Submit milk order by end of day — delivered ${milkDeliverDate}`});
+  }
+  const prepItems=tpl.prepTemplate.map(t=>resolvePrep(t,wk,i));
+  const custList=customTasks[`${ck}-${wk}-${i}`]||[];
+
+  // Count all tasks for progress
+  const allTaskCount=sysTasks.length+prepItems.length+custList.length;
+  const sysDone=sysTasks.filter(t=>taskDone[t.id]).length;
+  const prepDone=prepItems.filter((_,idx)=>prepChecks[mkPrepId(ck,wk,i,idx)]).length;
+  const custDone=custList.filter((_,idx)=>taskDone[mkCustomId(ck,wk,i,idx)]).length;
+  const totalDone=sysDone+prepDone+custDone;
+
+  bodyHtml+=`<div><div class="detail-label">Prep tasks &amp; to-dos</div>
+  <div class="progress-bar"><div class="progress-fill" id="pbar" style="width:${allTaskCount?Math.round(totalDone/allTaskCount*100):0}%"></div></div>
+  <div class="progress-label" id="plbl">${totalDone} of ${allTaskCount} done &nbsp;<button class="reset-btn" onclick="resetPrep(${i})">reset all</button></div>`;
+
+  // System order task
+  sysTasks.forEach(t=>{
+    const chk=taskDone[t.id];
+    bodyHtml+=`<div class="check-item system-task${chk?' done':''}" id="srow-${t.id}">
+      <input type="checkbox" id="schk-${t.id}"${chk?' checked':''} onchange="toggleSysTask('${t.id}',${i})">
+      <label for="schk-${t.id}">${t.label}</label>
+    </div>`;
+  });
+
+  // Regular prep tasks
+  prepItems.forEach((p,idx)=>{
+    const key=mkPrepId(ck,wk,i,idx),chk=prepChecks[key];
+    const isWarn=p.startsWith('⚠️')||p.startsWith('&#9888;');
+    bodyHtml+=`<div class="check-item${isWarn?' warn-task':''}${chk?' done':''}" id="prow-${idx}">
+      <input type="checkbox" id="pchk-${idx}"${chk?' checked':''} onchange="togglePrep(${i},${idx},'${key}')">
+      <label for="pchk-${idx}">${p}</label>
+    </div>`;
+  });
+
+  // Custom tasks
+  custList.forEach((task,idx)=>{
+    const key=mkCustomId(ck,wk,i,idx),chk=taskDone[key];
+    bodyHtml+=`<div class="check-item${chk?' done':''}" id="crow-${idx}">
+      <input type="checkbox" id="cchk-${idx}"${chk?' checked':''} onchange="toggleCustomTask(${i},${idx},'${key}')">
+      <label for="cchk-${idx}">${task}</label>
+      <button class="del-task" onclick="deleteCustomTask(${i},${idx})" title="Remove task">&#10005;</button>
+    </div>`;
+  });
+
+  // Add task input
+  bodyHtml+=`<div class="add-task-row">
+    <input type="text" id="newTaskInput" placeholder="Add a task for this day…" onkeydown="if(event.key==='Enter')addCustomTask(${i})">
+    <button onclick="addCustomTask(${i})">+ Add</button>
+  </div></div>`;
+
+  document.getElementById('detailBody').innerHTML=bodyHtml;
+  panel.scrollIntoView({behavior:'smooth',block:'nearest'});
+}
+
+function rebuildPrepProgress(dayIdx){
+  const ck=cycleKey(), wk=currentWeek, i=dayIdx;
+  const tpl=weekTemplates[wk][i];
+  const oKey=`${wk}-${i}`;
+  const foodTaskId=orderDeadlineMap[oKey]!==undefined?orderTaskKey(wk,i):null;
+  const milkId=milkDeadlineDays[oKey]?milkTaskKey(wk,i):null;
+  const sysCount=(foodTaskId?1:0)+(milkId?1:0);
+  const prepItems=tpl.prepTemplate;
+  const custList=customTasks[`${ck}-${wk}-${i}`]||[];
+  const allTaskCount=sysCount+prepItems.length+custList.length;
+  const sysDone=(foodTaskId&&taskDone[foodTaskId]?1:0)+(milkId&&taskDone[milkId]?1:0);
+  const prepDone=prepItems.filter((_,idx)=>prepChecks[mkPrepId(ck,wk,i,idx)]).length;
+  const custDone=custList.filter((_,idx)=>taskDone[mkCustomId(ck,wk,i,idx)]).length;
+  const totalDone=sysDone+prepDone+custDone;
+  const bar=document.getElementById('pbar'),lbl=document.getElementById('plbl');
+  if(bar) bar.style.width=(allTaskCount?Math.round(totalDone/allTaskCount*100):0)+'%';
+  if(lbl) lbl.innerHTML=`${totalDone} of ${allTaskCount} done &nbsp;<button class="reset-btn" onclick="resetPrep(${dayIdx})">reset all</button>`;
+}
+function toggleSysTask(id,dayIdx){
+  taskDone[id]=!taskDone[id];
+  const row=document.getElementById(`srow-${id}`);
+  if(row) taskDone[id]?row.classList.add('done'):row.classList.remove('done');
+  rebuildPrepProgress(dayIdx);
+}
+function togglePrep(dayIdx,taskIdx,key){
+  prepChecks[key]=!prepChecks[key];
+  const row=document.getElementById(`prow-${taskIdx}`);
+  if(row) prepChecks[key]?row.classList.add('done'):row.classList.remove('done');
+  rebuildPrepProgress(dayIdx);
+}
+function toggleCustomTask(dayIdx,taskIdx,key){
+  taskDone[key]=!taskDone[key];
+  const row=document.getElementById(`crow-${taskIdx}`);
+  if(row) taskDone[key]?row.classList.add('done'):row.classList.remove('done');
+  rebuildPrepProgress(dayIdx);
+}
+function addCustomTask(dayIdx){
+  const inp=document.getElementById('newTaskInput');
+  const val=inp.value.trim();
+  if(!val) return;
+  const ck=cycleKey(), wk=currentWeek, i=dayIdx;
+  const k=`${ck}-${wk}-${i}`;
+  if(!customTasks[k]) customTasks[k]=[];
+  customTasks[k].push(val);
+  selectDay(dayIdx);
+}
+function deleteCustomTask(dayIdx,taskIdx){
+  const ck=cycleKey(), wk=currentWeek, i=dayIdx;
+  const k=`${ck}-${wk}-${i}`;
+  if(customTasks[k]){
+    // also clear its done state
+    delete taskDone[mkCustomId(ck,wk,i,taskIdx)];
+    // shift remaining keys down
+    for(let j=taskIdx+1;j<customTasks[k].length;j++){
+      taskDone[mkCustomId(ck,wk,i,j-1)]=taskDone[mkCustomId(ck,wk,i,j)];
+      delete taskDone[mkCustomId(ck,wk,i,j)];
+    }
+    customTasks[k].splice(taskIdx,1);
+  }
+  selectDay(dayIdx);
+}
+function resetPrep(dayIdx){
+  const ck=cycleKey(), wk=currentWeek, i=dayIdx;
+  weekTemplates[wk][i].prepTemplate.forEach((_,idx)=>{delete prepChecks[mkPrepId(ck,wk,i,idx)];});
+  const k=`${ck}-${wk}-${i}`;
+  (customTasks[k]||[]).forEach((_,idx)=>{delete taskDone[mkCustomId(ck,wk,i,idx)];});
+  const oKey=`${wk}-${i}`;
+  if(orderDeadlineMap[oKey]!==undefined) delete taskDone[orderTaskKey(wk,i)];
+  if(milkDeadlineDays[oKey]) delete taskDone[milkTaskKey(wk,i)];
+  selectDay(dayIdx);
+}
+
+// ── Cashier (collapsible) ─────────────────────────────────────────────────────
+function renderCashier(){
+  document.getElementById('cashierList').innerHTML=cashierTemplate.map((c,ci)=>{
+    const date=cd(c.wk,c.d);
+    return `<div class="cheat-entry">
+      <div class="cheat-header" onclick="toggleCheat(${ci})">
+        <span class="cheat-title">${fmt(date)} — ${c.entree}</span>
+        <span id="ca${ci}">&#9660;</span>
+      </div>
+      <div class="cheat-body" id="cb${ci}">
+        <div class="cheat-check"><strong>Check:</strong> ${c.check}</div>
+        <div class="cheat-sides"><strong>Valid sides:</strong> ${c.sides}</div>
+        <div class="cheat-reject">&#10007; Reject if: ${c.reject}</div>
+      </div>
+    </div>`;
+  }).join('');
+}
+function toggleCheat(ci){
+  const body=document.getElementById(`cb${ci}`);
+  const arr=document.getElementById(`ca${ci}`);
+  const open=body.classList.toggle('open');
+  arr.textContent=open?'▲':'▼';
+}
+
+// ── Orders (collapsible) ──────────────────────────────────────────────────────
+function mkOrdId(cycle,oi,type,ii){return `o-${cycle}-${oi}-${type}-${ii}`;}
+function mkCustOrdId(cycle,oi,ii){return `co-${cycle}-${oi}-${ii}`;}
+
+// ── Qty needed calculation ────────────────────────────────────────────────────
+function calcQtyNeeded(item){
+  // flatQty: item is ordered as a fixed quantity per order window, not per person
+  if(item.flatQty) return item.flatQty * item.usedOn.length;
+  return item.usedOn.length * item.qtyPer * (item.mealType==='B' ? qtyB : qtyL);
+}
+function invKey(oi,type,ii){return `inv-${oi}-${type}-${ii}`;}
+
+function refreshQtyChip(oi,type,ii){
+  const ik=invKey(oi,type,ii);
+  const items=type==='b'?orderTemplates[oi].breakfast:orderTemplates[oi].lunch;
+  const item=items[ii];
+  if(!item) return;
+  const needed=calcQtyNeeded(item);
+  const onHand=parseInt(inventory[ik])||0;
+  const toOrder=Math.max(0,needed-onHand);
+  const chipEl=document.getElementById(`chip-${ik}`);
+  const formulaEl=document.getElementById(`formula-${ik}`);
+  if(chipEl){
+    if(toOrder===0){chipEl.textContent='✓ Have enough';chipEl.className='qty-chip ok';}
+    else{chipEl.textContent=`Order ${toOrder}`;chipEl.className='qty-chip need';}
+  }
+  if(formulaEl){
+    const dayQty=item.mealType==='B'?qtyB:qtyL;
+    if(item.flatQty){
+      formulaEl.textContent=`Need: 1 packet per order = ${needed}`;
+    } else {
+      const perEntry=item.qtyPer>1?`${item.qtyPer}×${dayQty}`:dayQty;
+      const parts=item.usedOn.map(()=>perEntry);
+      formulaEl.textContent=`Need: ${parts.join(' + ')} = ${needed}${item.qtyPer>1?' ('+item.qtyPer+' per person)':''}`;
+    }
+  }
+}
+
+function renderOrderItem(item,key,oi,type,ii){
+  const chk=orderChecks[key];
+  const isDouble=item.usedOn.length>1;
+  const usedTags=item.usedOn.map(u=>`<span class="used-tag">${fmtShort(cd(u.wk,u.d))} — ${u.meal}</span>`).join('');
+  const doubleBadge=isDouble?`<span class="double-badge">&#215;${item.usedOn.length} days — check qty!</span>`:'';
+  const ik=invKey(oi,type,ii);
+  const needed=calcQtyNeeded(item);
+  const onHand=parseInt(inventory[ik])||0;
+  const toOrder=Math.max(0,needed-onHand);
+  const chipClass=toOrder===0?'ok':'need';
+  const chipText=toOrder===0?'✓ Have enough':`Order ${toOrder}`;
+  const dayQty=item.mealType==='B'?qtyB:qtyL;
+  const formula = item.flatQty
+    ? `Need: 1 packet per order${item.usedOn.length>1?' × '+item.usedOn.length+' days':''} = ${needed}`
+    : (() => { const perEntry=item.qtyPer>1?`${item.qtyPer}×${dayQty}`:dayQty; return `Need: ${item.usedOn.map(()=>perEntry).join(' + ')} = ${needed}${item.qtyPer>1?' ('+item.qtyPer+' per person)':''}`; })();
+  return `<div class="order-row${chk?' done':''}" id="orow-${key}">
+    <input type="checkbox" id="ocb-${key}"${chk?' checked':''} onchange="toggleOrder('${key}',${oi})">
+    <div class="order-row-body">
+      <div class="order-item-name" onclick="document.getElementById('ocb-${key}').click()">${item.name}</div>
+      <div class="order-item-used">${usedTags}${doubleBadge}</div>
+      <div class="inv-row">
+        <div class="inv-field">
+          <label for="inv-${ik}">On hand:</label>
+          <input type="number" id="inv-${ik}" value="${onHand||''}" min="0" placeholder="0"
+            oninput="inventory['${ik}']=parseInt(this.value)||0;refreshQtyChip(${oi},'${type}',${ii})">
+        </div>
+        <span class="qty-chip ${chipClass}" id="chip-${ik}">${chipText}</span>
+        <span class="qty-formula" id="formula-${ik}">${formula}</span>
+      </div>
+    </div>
+  </div>`;
+}
+
+function getOrderProgress(oi){
+  const cycle=cycleKey(), o=orderTemplates[oi];
+  const stdKeys=[...o.breakfast.map((_,ii)=>mkOrdId(cycle,oi,'b',ii)),...o.lunch.map((_,ii)=>mkOrdId(cycle,oi,'l',ii))];
+  const custList=customOrderItems[`${cycle}-${oi}`]||[];
+  const custKeys=custList.map((_,ii)=>mkCustOrdId(cycle,oi,ii));
+  const allKeys=[...stdKeys,...custKeys];
+  const done=stdKeys.filter(k=>orderChecks[k]).length + custKeys.filter(k=>customOrderDone[k]).length;
+  return {total:allKeys.length,done};
+}
+
+function renderOrders(){
+  const cycle=cycleKey();
+  document.getElementById('orderList').innerHTML=orderTemplates.map((o,oi)=>{
+    const orderDate=fmt(cd(o.orderDay.wk,o.orderDay.d));
+    const deliverDate=fmt(cd(o.deliverDay.wk,o.deliverDay.d));
+    const coverDates=o.coversDays.map(c=>fmt(cd(c.wk,c.d))).join(', ');
+    const {total,done}=getOrderProgress(oi);
+    const allDone=total>0&&done===total;
+    const bItems=o.breakfast.map((item,ii)=>renderOrderItem(item,mkOrdId(cycle,oi,'b',ii),oi,'b',ii)).join('');
+    const lItems=o.lunch.map((item,ii)=>renderOrderItem(item,mkOrdId(cycle,oi,'l',ii),oi,'l',ii)).join('');
+    const custList=customOrderItems[`${cycle}-${oi}`]||[];
+    const custItems=custList.map((name,ii)=>{
+      const key=mkCustOrdId(cycle,oi,ii), chk=customOrderDone[key];
+      return `<div class="order-custom-row${chk?' done':''}" id="corow-${key}">
+        <input type="checkbox" id="cocb-${key}"${chk?' checked':''} onchange="toggleCustomOrder('${key}',${oi})">
+        <div class="order-item-name" style="flex:1" onclick="document.getElementById('cocb-${key}').click()">${name}</div>
+        <button class="del-task" onclick="deleteCustomOrder(${oi},${ii})" title="Remove">&#10005;</button>
+      </div>`;
+    }).join('');
+    const custSection=custList.length?`<div class="order-group-label">Custom items</div>${custItems}`:'';
+    return `<div class="order-section" data-oi="${oi}">
+      <div class="order-header" onclick="toggleOrder_section(${oi})">
+        <div class="order-header-left">
+          <div class="order-header-title">${o._isBridgeOrder?'&#128259; CYCLE BRIDGE — ':''} Order by end of ${orderDate}</div>
+          <div class="order-header-sub">${o._isBridgeOrder?'Covers <strong>next cycle</strong> ':'Delivered '+deliverDate+' — covers '}${coverDates}</div>
+        </div>
+        <div class="order-header-meta">
+          <span class="progress-pill${allDone?' done-all':''}" id="opill-${oi}">${done}/${total}${allDone?' ✓':''}</span>
+          <span id="oarr-${oi}" style="color:var(--text3);font-size:13px;">&#9660;</span>
+        </div>
+      </div>
+      <div class="order-body" id="obody-${oi}">
+        <div class="progress-bar" style="margin:0 0 8px;"><div class="progress-fill" id="obar-${oi}" style="width:${total?Math.round(done/total*100):0}%"></div></div>
+        <div class="order-group-label">Breakfast items</div>${bItems}
+        <div class="order-group-label">Lunch items</div>${lItems}
+        ${custSection}
+        <div class="add-order-row" style="margin-top:12px;">
+          <input type="text" id="newOrdInput-${oi}" placeholder="Add a custom item…" onkeydown="if(event.key==='Enter')addCustomOrder(${oi})">
+          <button onclick="addCustomOrder(${oi})">+ Add</button>
+        </div>
+        <div style="margin-top:8px;display:flex;align-items:center;gap:12px;flex-wrap:wrap;">
+          <button class="reset-btn" onclick="resetOrder(${oi})">reset checklist</button>
+          <button class="action-btn" onclick="printOrder(${oi})" style="font-size:12px;padding:5px 10px;">&#128438; Print this order</button>
+          <button class="action-btn primary" onclick="openEmailModal(${oi})" style="font-size:12px;padding:5px 10px;">&#9993; Email this order</button>
+        </div>
+      </div>
+    </div>`;
+  }).join('');
+}
+
+function toggleOrder_section(oi){
+  const body=document.getElementById(`obody-${oi}`);
+  const arr=document.getElementById(`oarr-${oi}`);
+  const open=body.classList.toggle('open');
+  arr.textContent=open?'▲':'▼';
+}
+function toggleOrder(key,oi){
+  orderChecks[key]=!orderChecks[key];
+  const row=document.getElementById(`orow-${key}`);
+  if(row) orderChecks[key]?row.classList.add('done'):row.classList.remove('done');
+  updateOrderMeta(oi);
+}
+function toggleCustomOrder(key,oi){
+  customOrderDone[key]=!customOrderDone[key];
+  const row=document.getElementById(`corow-${key}`);
+  if(row) customOrderDone[key]?row.classList.add('done'):row.classList.remove('done');
+  updateOrderMeta(oi);
+}
+function updateOrderMeta(oi){
+  const {total,done}=getOrderProgress(oi);
+  const allDone=total>0&&done===total;
+  const bar=document.getElementById(`obar-${oi}`),pill=document.getElementById(`opill-${oi}`);
+  if(bar) bar.style.width=(total?Math.round(done/total*100):0)+'%';
+  if(pill){pill.textContent=`${done}/${total}${allDone?' ✓':''}`;pill.className='progress-pill'+(allDone?' done-all':'');}
+}
+function addCustomOrder(oi){
+  const inp=document.getElementById(`newOrdInput-${oi}`);
+  const val=inp.value.trim(); if(!val) return;
+  const k=`${cycleKey()}-${oi}`;
+  if(!customOrderItems[k]) customOrderItems[k]=[];
+  customOrderItems[k].push(val);
+  renderOrders();
+  // reopen the section
+  const body=document.getElementById(`obody-${oi}`);
+  const arr=document.getElementById(`oarr-${oi}`);
+  if(body&&!body.classList.contains('open')){body.classList.add('open');arr.textContent='▲';}
+}
+function deleteCustomOrder(oi,idx){
+  const k=`${cycleKey()}-${oi}`;
+  if(customOrderItems[k]){
+    const key=mkCustOrdId(cycleKey(),oi,idx);
+    delete customOrderDone[key];
+    for(let j=idx+1;j<customOrderItems[k].length;j++){
+      customOrderDone[mkCustOrdId(cycleKey(),oi,j-1)]=customOrderDone[mkCustOrdId(cycleKey(),oi,j)];
+      delete customOrderDone[mkCustOrdId(cycleKey(),oi,j)];
+    }
+    customOrderItems[k].splice(idx,1);
+  }
+  renderOrders();
+  const body=document.getElementById(`obody-${oi}`),arr=document.getElementById(`oarr-${oi}`);
+  if(body&&!body.classList.contains('open')){body.classList.add('open');arr.textContent='▲';}
+}
+function resetOrder(oi){
+  const cycle=cycleKey(), o=orderTemplates[oi];
+  o.breakfast.forEach((_,ii)=>{delete orderChecks[mkOrdId(cycle,oi,'b',ii)];});
+  o.lunch.forEach((_,ii)=>{delete orderChecks[mkOrdId(cycle,oi,'l',ii)];});
+  const k=`${cycle}-${oi}`;
+  (customOrderItems[k]||[]).forEach((_,ii)=>{delete customOrderDone[mkCustOrdId(cycle,oi,ii)];});
+  renderOrders();
+  const body=document.getElementById(`obody-${oi}`),arr=document.getElementById(`oarr-${oi}`);
+  if(body&&!body.classList.contains('open')){body.classList.add('open');arr.textContent='▲';}
+}
+
+// ── Print & Email ─────────────────────────────────────────────────────────────
+function printOrder(oi){
+  // Mark which order to print, open its body, then print
+  document.querySelectorAll('.order-section').forEach((el,idx)=>{
+    el.setAttribute('data-oi',idx);
+  });
+  // Store target oi on body for CSS
+  document.body.setAttribute('data-print-oi', oi);
+  // Ensure the target body is open
+  const body=document.getElementById(`obody-${oi}`);
+  const arr=document.getElementById(`oarr-${oi}`);
+  if(body&&!body.classList.contains('open')){body.classList.add('open');if(arr)arr.textContent='▲';}
+  setTimeout(()=>{
+    window.print();
+    document.body.removeAttribute('data-print-oi');
+  },100);
+}
+
+function buildOrderText(oi){
+  const o=orderTemplates[oi];
+  const orderDate=fmt(cd(o.orderDay.wk,o.orderDay.d));
+  const deliverDate=fmt(cd(o.deliverDay.wk,o.deliverDay.d));
+  const coverDates=o.coversDays.map(c=>fmt(cd(c.wk,c.d))).join(', ');
+  let lines=[];
+  lines.push(`PIER — SUMMER SCHOOL FOOD ORDER`);
+  lines.push(`Order by: ${orderDate}`);
+  lines.push(`Delivery: ${deliverDate}`);
+  lines.push(`Covers: ${coverDates}`);
+  lines.push(`Serving: ${qtyB} breakfasts / ${qtyL} lunches per day`);
+  lines.push('');
+  lines.push('BREAKFAST ITEMS');
+  lines.push('───────────────────────────────');
+  o.breakfast.forEach((item,ii)=>{
+    const ik=invKey(oi,'b',ii);
+    const needed=calcQtyNeeded(item);
+    const onHand=parseInt(inventory[ik])||0;
+    const toOrder=Math.max(0,needed-onHand);
+    const status=toOrder===0?'(have enough)':'ORDER: '+toOrder;
+    lines.push(`  ${item.name}`);
+    lines.push(`    Need ${needed}  |  On hand: ${onHand}  |  ${status}`);
+  });
+  lines.push('');
+  lines.push('LUNCH ITEMS');
+  lines.push('───────────────────────────────');
+  o.lunch.forEach((item,ii)=>{
+    const ik=invKey(oi,'l',ii);
+    const needed=calcQtyNeeded(item);
+    const onHand=parseInt(inventory[ik])||0;
+    const toOrder=Math.max(0,needed-onHand);
+    const status=toOrder===0?'(have enough)':'ORDER: '+toOrder;
+    lines.push(`  ${item.name}`);
+    lines.push(`    Need ${needed}  |  On hand: ${onHand}  |  ${status}`);
+  });
+  const custList=customOrderItems[`${cycleKey()}-${oi}`]||[];
+  if(custList.length){
+    lines.push('');
+    lines.push('ADDITIONAL ITEMS');
+    lines.push('───────────────────────────────');
+    custList.forEach(name=>lines.push(`  ${name}`));
+  }
+  return lines.join('\n');
+}
+
+function openEmailModal(oi){
+  const sel=document.getElementById('emailOrderSel');
+  sel.innerHTML=orderTemplates.map((o,idx)=>{
+    const orderDate=fmt(cd(o.orderDay.wk,o.orderDay.d));
+    const coverDates=o.coversDays.map(c=>fmt(cd(c.wk,c.d))).join(' & ');
+    return `<option value="${idx}"${idx===oi?' selected':''}>Order due ${orderDate} — covers ${coverDates}</option>`;
+  }).join('');
+  updateEmailSubject();
+  sel.onchange=updateEmailSubject;
+  document.getElementById('emailModalBg').style.display='flex';
+}
+function updateEmailSubject(){
+  const oi=parseInt(document.getElementById('emailOrderSel').value);
+  const o=orderTemplates[oi];
+  const orderDate=fmt(cd(o.orderDay.wk,o.orderDay.d));
+  const coverDates=o.coversDays.map(c=>fmt(cd(c.wk,c.d))).join(' & ');
+  document.getElementById('emailSubject').value=`Pier — Summer School Food Order — due ${orderDate} (covers ${coverDates})`;
+}
+function closeEmailModal(){
+  document.getElementById('emailModalBg').style.display='none';
+}
+function sendEmail(){
+  const oi=parseInt(document.getElementById('emailOrderSel').value);
+  const to=document.getElementById('emailTo').value.trim();
+  const subject=document.getElementById('emailSubject').value.trim();
+  const body=buildOrderText(oi);
+  // Open Gmail compose in a new tab so user can review before sending
+  const gmailUrl='https://mail.google.com/mail/?authuser=foodwo@fonddulac.k12.wi.us&view=cm&fs=1'
+    +'&to='+encodeURIComponent(to)
+    +'&su='+encodeURIComponent(subject)
+    +'&body='+encodeURIComponent(body);
+  window.open(gmailUrl,'_blank');
+  closeEmailModal();
+}
+
+// ── Init ──────────────────────────────────────────────────────────────────────
+updateCycleBanner(); updateWeekBtns(); renderDays(); renderCashier(); renderOrders();
+</script>
+</body>
+</html>
