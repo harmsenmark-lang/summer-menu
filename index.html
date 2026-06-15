@@ -159,6 +159,30 @@ select,input[type=number]{font-family:inherit;font-size:13px;padding:5px 10px;bo
 .qty-chip.ok{background:var(--accent-bg);color:var(--accent-text);}
 .qty-chip.exact{background:var(--bg3);color:var(--text2);}
 .qty-formula{font-size:11px;color:var(--text3);}
+/* order notes */
+.order-notes-wrap{margin-top:10px;}
+.order-notes-label{font-size:11px;font-weight:600;color:var(--text3);text-transform:uppercase;letter-spacing:.07em;margin-bottom:4px;}
+.order-notes-ta{width:100%;font-family:inherit;font-size:13px;padding:8px 10px;border-radius:var(--radius-sm);border:0.5px solid var(--border2);background:var(--bg2);color:var(--text);resize:vertical;min-height:60px;line-height:1.5;}
+.order-notes-ta:focus{outline:none;border-color:var(--accent);background:var(--bg);}
+.order-notes-ta::placeholder{color:var(--text3);}
+
+/* count & review modal */
+.count-modal-bg{position:fixed;inset:0;background:rgba(0,0,0,0.5);z-index:200;display:flex;align-items:flex-start;justify-content:center;padding:20px 16px;overflow-y:auto;}
+.count-modal{background:var(--bg);border-radius:var(--radius);width:min(560px,100%);border:0.5px solid var(--border2);max-height:calc(100vh - 40px);display:flex;flex-direction:column;}
+.count-modal-header{padding:16px 20px;border-bottom:0.5px solid var(--border);display:flex;align-items:center;justify-content:space-between;flex-shrink:0;gap:12px;}
+.count-modal-header h3{font-size:16px;font-weight:600;}
+.count-modal-body{overflow-y:auto;padding:16px 20px;flex:1;}
+.count-order-block{margin-bottom:20px;}
+.count-order-title{font-size:13px;font-weight:600;color:var(--text2);margin-bottom:10px;padding-bottom:6px;border-bottom:0.5px solid var(--border);}
+.count-item-row{display:flex;align-items:center;gap:10px;padding:7px 0;border-bottom:0.5px solid var(--border);}
+.count-item-row:last-child{border-bottom:none;}
+.count-item-name{flex:1;font-size:13px;color:var(--text);}
+.count-item-need{font-size:12px;color:var(--text3);white-space:nowrap;}
+.count-chip{font-size:11px;font-weight:600;padding:2px 8px;border-radius:99px;white-space:nowrap;min-width:84px;text-align:center;}
+.count-chip.need{background:var(--danger-bg);color:var(--danger-text);}
+.count-chip.ok{background:var(--accent-bg);color:var(--accent-text);}
+.count-modal-footer{padding:12px 20px;border-top:0.5px solid var(--border);flex-shrink:0;display:flex;justify-content:flex-end;}
+
 .order-actions{display:flex;gap:8px;margin-bottom:1rem;flex-wrap:wrap;}
 .action-btn{display:inline-flex;align-items:center;gap:6px;padding:7px 14px;border-radius:var(--radius-sm);border:0.5px solid var(--border2);background:var(--bg);color:var(--text);cursor:pointer;font-family:inherit;font-size:13px;font-weight:500;}
 .action-btn:hover{background:var(--bg2);}
@@ -187,7 +211,8 @@ select,input[type=number]{font-family:inherit;font-size:13px;padding:5px 10px;bo
   body[data-print-oi="1"] .order-section[data-oi="1"],
   body[data-print-oi="2"] .order-section[data-oi="2"],
   body[data-print-oi="3"] .order-section[data-oi="3"],
-  body[data-print-oi="4"] .order-section[data-oi="4"]{display:block!important;}
+  body[data-print-oi="4"] .order-section[data-oi="4"],
+  body[data-print-oi="5"] .order-section[data-oi="5"]{display:block!important;}
   .order-header{padding:10px!important;border-bottom:1px solid #ccc!important;}
   .order-body{display:block!important;padding:10px!important;}
   .order-header-title{font-size:14px!important;font-weight:bold!important;}
@@ -223,6 +248,11 @@ select,input[type=number]{font-family:inherit;font-size:13px;padding:5px 10px;bo
       <label>&#127829; Lunches/day:</label>
       <input type="number" id="qtyL" value="70" min="1" max="999" onchange="updateQtys()">
     </div>
+    <div class="qty-row">
+      <button class="action-btn" onclick="saveState()" title="Save all checkboxes, inventory counts and custom tasks to a file">&#128190; Save progress</button>
+      <button class="action-btn" onclick="document.getElementById('loadFile').click()" title="Load a previously saved progress file">&#128196; Load progress</button>
+      <input type="file" id="loadFile" accept=".json" style="display:none" onchange="loadState(this)">
+    </div>
   </div>
 </header>
 <div class="tabs">
@@ -253,12 +283,32 @@ select,input[type=number]{font-family:inherit;font-size:13px;padding:5px 10px;bo
   </div>
   <div id="orders" class="section">
     <div class="print-site-label" style="display:none;">&#127822; Pier — Summer School Menu</div>
+    <div class="order-actions">
+      <button class="action-btn primary" onclick="openCountModal()">&#128203; Count &amp; Review inventory</button>
+    </div>
     <div class="legend">&#9888; Items marked <strong style="margin:0 4px;">&#215;2+ days</strong> are used on multiple days — check quantity needed.</div>
     <div id="orderList"></div>
   </div>
 </div>
 
 <!-- Email modal -->
+<!-- COUNT & REVIEW MODAL -->
+<div class="count-modal-bg" id="countModalBg" style="display:none;" onclick="if(event.target===this)closeCountModal()">
+  <div class="count-modal">
+    <div class="count-modal-header">
+      <h3>📋 Count &amp; Review — On-Hand Inventory</h3>
+      <div style="display:flex;gap:8px;">
+        <button class="action-btn" onclick="clearAllCounts()" style="padding:5px 12px;font-size:12px;color:var(--danger-text);border-color:var(--danger-border);">&#10005; Clear all counts</button>
+        <button class="action-btn" onclick="closeCountModal()" style="padding:5px 12px;font-size:12px;">Done</button>
+      </div>
+    </div>
+    <div class="count-modal-body" id="countModalBody"></div>
+    <div class="count-modal-footer">
+      <button class="action-btn primary" onclick="closeCountModal()">Done — update orders</button>
+    </div>
+  </div>
+</div>
+
 <div class="email-modal-bg" id="emailModalBg" style="display:none;" onclick="if(event.target===this)closeEmailModal()">
   <div class="email-modal">
     <h3>&#9993; Email an order</h3>
@@ -289,20 +339,28 @@ let cycleStart=parseLocal('2026-06-08');
 let qtyB=50, qtyL=70;
 let currentWeek=0, selectedDay=null;
 const prepChecks={}, customTasks={}, taskDone={};
-const orderChecks={}, customOrderItems={}, customOrderDone={};
+const orderChecks={}, customOrderItems={}, customOrderDone={}, orderNotes={};
+const orderOverrides={}; // manual per-item order-qty overrides (blank = use calculated)
 const inventory={}; // key → on-hand qty entered by user
 let detailOpen=true;
 
 function cycleDate(wk,d){return addDays(cycleStart,wk*7+d);}
 function cd(wk,d){return cycleDate(wk,d);}
 function cycleKey(){return cycleStart.toISOString().slice(0,10);}
+const CYCLE_DAYS=21; // one full rotation = 3 weeks
+// Resolve a coversDay/usedOn day for a given order. If that day falls before the
+// order's own delivery day, it belongs to the NEXT cycle, so shift it a full cycle.
+function orderDayDate(o,wk,d){
+  const lin=wk*7+d, delLin=o.deliverDay.wk*7+o.deliverDay.d;
+  return addDays(cycleStart, lin + (lin<delLin?CYCLE_DAYS:0));
+}
 
 // ── Menu templates ────────────────────────────────────────────────────────────
 const weekTemplates=[
   [
     {day:'Mon',alert:false,delivery:false,
      breakfast:['Trix Cereal Bar (1 each)','Low Fat Mozzarella String Cheese (1 each)','Assorted Fruit Juice (1 each)','1% Low-fat Milk / Choc Milk'],
-     lunch:['Ham & American Cheese Sandwich','— Bun (1)','— Ham, 3 slices','— Cheese, 2 slices','— Mayo packet (1)','Fresh Broccoli Florets (68g / 2.4 oz bag)','Chilled Diced Pears','Milk'],
+     lunch:['Ham & American Cheese Sandwich','— Bun (1)','— Ham, 3 slices','— Cheese, 2 slices','— Mayo packet (1)','Fresh Broccoli Florets (68g / 2.4 oz bag)','Chilled Diced Pears (0.75 cups) — {CANS} cans','Milk'],
      prepTemplate:['Pack {TUE} breakfast: {QB} Oatmeal Rounds, {QB} Craisins, {QB} Juices, Milks']},
     {day:'Tue',alert:'Order food by end of day (for Thu & Fri)',delivery:false,
      breakfast:['Banana Chocolate Chip Oatmeal Round (1 each)','Assorted Craisins (1 serving)','Assorted Fruit Juice (1 each)','1% Low-fat Milk / Choc Milk'],
@@ -311,10 +369,10 @@ const weekTemplates=[
     {day:'Wed',alert:'Order milk by end of day (for Thu delivery next week)',delivery:'Delivery day — Thu/Fri food arriving',
      breakfast:['Scooby Doo Graham Crackers (1 each)','Fresh Red Delicious Apple (1 each)','Assorted Fruit Juice (1 each)','1% Low-fat Milk / Choc Milk'],
      lunch:['Cereal, Yogurt & Cheese Fun Lunch','— Trix Cereal ({QL} total)','— Yogurt ({QL} total)','— String Cheese ({QL} total)','Sliced Cucumbers (90g / 3.2 oz bags)','Fresh Orange Wedges ({QL} bags)','Milk'],
-     prepTemplate:['Pack {THU} breakfast immediately: {QB} Blueberry Muffins, {QB} Raisins, Juices']},
+     prepTemplate:['Pack {THU} breakfast today (already on shelf from last delivery — no morning-of scramble): {QB} Blueberry Muffins, {QB} Raisins, Juices']},
     {day:'Thu',alert:'Order food by end of day (for Mon/Tue/Wed next week)',delivery:false,
      breakfast:['Whole Grain Blueberry Muffin (1 each)','Raisins (1 packet)','Assorted Fruit Juice (1 each)','1% Low-fat Milk / Choc Milk'],
-     lunch:['Classic American Cheeseburger','— Bun ({QL} total)','— Beef Patty ({QL} total)','— Cheese slice ({QL} total)','— Ketchup packet ({QL} total)','Seasoned Mixed Vegetables (0.75 cups)','Rosy Applesauce (0.75 cups) — 10 jars, mix in 1 gelatin packet','Milk'],
+     lunch:['Classic American Cheeseburger','— Bun ({QL} total)','— Beef Patty ({QL} total)','— Cheese slice ({QL} total)','— Ketchup packet ({QL} total)','Seasoned Mixed Vegetables (0.75 cups)','Rosy Applesauce (0.75 cups) — {JARS} jars, mix in 1 gelatin packet','Milk'],
      prepTemplate:['Pack {FRI} breakfast: {QB} Benefit Bars, {QB} Peach Cups, {QB} Juices, Milks','Bag {FRI} lunch veggie: baby carrots at 85g (3.0 oz) each — 11.2 lbs total']},
     {day:'Fri',alert:false,delivery:'Delivery day — next week Mon/Tue/Wed food arriving',
      breakfast:['Banana Chocolate Chunk BeneFIT Bar (1 each)','Peaches in Extra Light Syrup (1 each)','Assorted Fruit Juice (1 each)','1% Low-fat Milk / Choc Milk'],
@@ -324,18 +382,18 @@ const weekTemplates=[
   [
     {day:'Mon',alert:false,delivery:false,
      breakfast:['Cinnamon Toast Crunch Cereal Bar (1 each)','Low Fat Mozzarella String Cheese (1 each)','Assorted Fruit Juice (1 each)','1% Low-fat Milk / Choc Milk'],
-     lunch:['Turkey and Cheese Sandwich','— Bun (1)','— Turkey, 3 slices ({QL3} total)','— Cheese, 2 slices ({QL2} total)','— Mayo Light packet ({QL} total)','Fresh Grape Tomatoes (114g / 4.0 oz bags)','Chilled Mixed Fruit (0.75 cups) — 5 cans','Milk'],
+     lunch:['Turkey and Cheese Sandwich','— Bun (1)','— Turkey, 3 slices ({QL3} total)','— Cheese, 2 slices ({QL2} total)','— Mayo Light packet ({QL} total)','Fresh Grape Tomatoes (114g / 4.0 oz bags)','Chilled Mixed Fruit (0.75 cups) — {CANS} cans','Milk'],
      prepTemplate:['Pack {TUE} breakfast: {QB} Pop-Tarts, {QB} Craisins, {QB} Juices, Milks']},
     {day:'Tue',alert:'Order food by end of day (for Thu & Fri)',delivery:false,
      breakfast:['Frosted Strawberry Pop-Tart (1 each)','Assorted Craisins (1 serving)','Assorted Fruit Juice (1 each)','1% Low-fat Milk / Choc Milk'],
-     lunch:['Cheese Stuffed Breadsticks, 2 per child ({QL2} total)','Marinara Sauce packet (1 each)','Steamed Peas (0.75 cups)','Cinnamon Applesauce (0.75 cups) — 10 jars','Milk'],
+     lunch:['Cheese Stuffed Breadsticks, 2 per child ({QL2} total)','Marinara Sauce packet (1 each)','Steamed Peas (0.75 cups)','Cinnamon Applesauce (0.75 cups) — {JARS} jars + cinnamon spice','Milk'],
      prepTemplate:['Pack {WED} breakfast: {QB} Bug Bites Grahams, {QB} Apples, {QB} Juices','Bag {WED} lunch veggie: baby carrots at 85g (3.0 oz) each — 11.2 lbs total','Bag {WED} lunch fruit: Fresh Orange Wedges ({QL} bags) — 1 orange per bag']},
     {day:'Wed',alert:'Order milk by end of day (for Thu delivery next week)',delivery:'Delivery day — Thu/Fri food arriving',
-     breakfast:['WG Banana Muffin (1 each)','Raisins (1 packet)','Assorted Fruit Juice (1 each)','1% Low-fat Milk / Choc Milk'],
+     breakfast:['Bug Bites Graham Crackers (1 each)','Fresh Red Delicious Apple (1 each)','Assorted Fruit Juice (1 each)','1% Low-fat Milk / Choc Milk'],
      lunch:['Cereal, Yogurt & Cheese Fun Lunch','— Cocoa Puffs Cereal ({QL} total)','— Yogurt ({QL} total)','— String Cheese ({QL} total)','Fresh Carrots (85g / 3.0 oz bags)','Fresh Orange Wedges ({QL} bags)','Milk'],
-     prepTemplate:['Pack {THU} breakfast immediately: {QB} WG Banana Muffins, {QB} Raisins, Juices']},
+     prepTemplate:['Pack {THU} breakfast today (already on shelf from last delivery — no morning-of scramble): {QB} WG Apple Cinnamon Muffins, {QB} Raisins, Juices']},
     {day:'Thu',alert:'Order food by end of day (for Mon/Tue/Wed next week)',delivery:false,
-     breakfast:['WG Banana Muffin (1 each)','Raisins (1 each)','Assorted Fruit Juice (1 each)','1% Low-fat Milk / Choc Milk'],
+     breakfast:['WG Apple Cinnamon Muffin (1 each)','Raisins (1 each)','Assorted Fruit Juice (1 each)','1% Low-fat Milk / Choc Milk'],
      lunch:['Turkey Hot Dog on a Bun','— Hot Dog ({QL} total)','— Bun ({QL} total)','— Ketchup packet ({QL} total)','Seasoned Corn (0.75 cups)','Fresh Red Delicious Apple (1 each)','Milk'],
      prepTemplate:['Pack {FRI} breakfast: {QB} French Toast Bars, {QB} Mixed Berries, Juices','Bag {FRI} lunch veggie: sliced cucumbers at 90g (3.2 oz) each — 12 lbs total','&#9888;&#65039; FROZEN BERRIES ISSUE: Mixed Berries Cups on {FRI} breakfast — only 1 hr thaw time (arrive 8am, serve 9am). Plan needed: thaw overnight in fridge? Sub fresh berries?']},
     {day:'Fri',alert:false,delivery:'Delivery day — next week Mon/Tue/Wed food arriving',
@@ -346,7 +404,7 @@ const weekTemplates=[
   [
     {day:'Mon',alert:false,delivery:false,
      breakfast:['Cocoa Puffs Cereal Bar (1 each)','Low Fat Mozzarella String Cheese (1 each)','Assorted Fruit Juice (1 each)','1% Low-fat Milk / Choc Milk'],
-     lunch:['Salami & Cheese Sandwich','— Salami, 6 slices ({QL6} total)','— Cheese, 2 slices ({QL2} total)','— Bun ({QL} total)','Fresh Celery Sticks (75g / 2.6 oz bags)','Apple Cinnamon Slices (0.75 cups) — 5 cans','Milk'],
+     lunch:['Salami & Cheese Sandwich','— Salami, 6 slices ({QL6} total)','— Cheese, 2 slices ({QL2} total)','— Bun ({QL} total)','Fresh Celery Sticks (75g / 2.6 oz bags)','Apple Cinnamon Slices (0.75 cups) — {CANS} cans — use ¾ tsp cinnamon per can','Milk'],
      prepTemplate:['Pack {TUE} breakfast: {QB} Breakfast Rounds, {QB} Craisins, {QB} Juices']},
     {day:'Tue',alert:'Order food by end of day (for Thu & Fri)',delivery:false,
      breakfast:['Chocolate Chip Ultimate Breakfast Round (1 each)','Assorted Craisins (1 serving)','Assorted Fruit Juice (1 each)','1% Low-fat Milk / Choc Milk'],
@@ -354,15 +412,15 @@ const weekTemplates=[
      prepTemplate:['Pack {WED} breakfast: {QB} Tiger Grahams, {QB} Apples, {QB} Juices','Bag {WED} lunch veggie: sliced cucumbers at 90g (3.2 oz) each — 12 lbs total','Pull Mixed Berries from freezer to thaw before lunch service']},
     {day:'Wed',alert:'Order milk by end of day (for Thu delivery next week)',delivery:'Delivery day — Thu/Fri food arriving · FIELD TRIP (48 kids)',
      breakfast:['Tiger Graham Crackers (1 each)','Fresh Red Delicious Apple (1 each)','Assorted Fruit Juice (1 each)','1% Low-fat Milk / Choc Milk'],
-     lunch:['Cereal, Yogurt & Cheese Fun Lunch','— Cinnamon Toast Cereal ({QL} total)','— Yogurt ({QL} total)','— String Cheese ({QL} total)','Sliced Cucumbers (90g / 3.2 oz bags)','Rosy Applesauce (0.75 cups) — 10 jars, mix in 1 gelatin packet','Milk'],
-     prepTemplate:['Pack {THU} breakfast immediately: {QB} Choc Chip Muffins, {QB} Raisins, Juices']},
+     lunch:['Cereal, Yogurt & Cheese Fun Lunch','— Cinnamon Toast Cereal ({QL} total)','— Yogurt ({QL} total)','— String Cheese ({QL} total)','Sliced Cucumbers (90g / 3.2 oz bags)','Rosy Applesauce (0.75 cups) — {JARS} jars, mix in 1 gelatin packet','Milk'],
+     prepTemplate:['Pack {THU} breakfast today (already on shelf from last delivery — no morning-of scramble): {QB} Choc Chip Muffins, {QB} Raisins, Juices']},
     {day:'Thu',alert:'Place CYCLE BRIDGE ORDER by end of day — covers Mon/Tue/Wed of next cycle (same items as Order 2)',delivery:false,
      breakfast:['Chocolate Chip Muffin (1 each)','Raisins (1 packet)','Assorted Fruit Juice (1 each)','1% Low-fat Milk / Choc Milk'],
-     lunch:['Crispy Chicken Patty Sandwich','— Bun ({QL} total)','— Chicken Patty ({QL} total)','— Barbecue Sauce (1 each = {QL} total)','BBQ Baked Beans (0.75 cups) — 5 cans + BBQ sauce to season','Fresh Pear (1 each)','Milk'],
-     prepTemplate:['Pack {FRI} breakfast: {QB} Cocoa Chip Bars, {QB} Pear Cups, {QB} Juices','Bag {FRI} lunch veggie: green pepper strips at 69g (2.4 oz) each — 9.1 lbs total','&#9888;&#65039; CYCLE BRIDGE ORDER — order same items as Order 2 (Cinnamon Toast Crunch Bars, String Cheese, Pop-Tarts, Craisins, Bug Bites Grahams, Apples, Juice, Sandwich Buns, Cheese, Turkey, Mayo, Grape Tomatoes, Mixed Fruit, Breadsticks, Marinara, Peas, Cinnamon Applesauce, Cocoa Puffs, Yogurt, Baby Carrots, Oranges). Request delivery Fri {FRI}.']},
+     lunch:['Crispy Chicken Patty Sandwich','— Bun ({QL} total)','— Chicken Patty ({QL} total)','— Barbecue Sauce (1 each = {QL} total)','BBQ Baked Beans (0.75 cups) — {BEANS} cans + 1.5 cups BBQ sauce per can','Fresh Pear (1 each)','Milk'],
+     prepTemplate:['Pack {FRI} breakfast: {QB} Cocoa Chip Bars, {QB} Pear Cups, {QB} Juices','Bag {FRI} lunch veggie: green pepper strips at 69g (2.4 oz) each — 9.1 lbs total','&#9888;&#65039; CYCLE BRIDGE ORDER — stocks the first days of NEXT cycle (Week 1 menu). Mon: Ham &amp; Cheese (Buns, Deli Ham, Cheese, Mayo), Broccoli Florets, Diced Pears cans. Tue: Chicken Nuggets, String Cheese, BBQ Sauce, Green Beans, Apples. Wed: Trix Cereal Fun Lunch (Trix Cereal, Yogurt, String Cheese), Cucumbers, Oranges. Breakfasts: Oatmeal Rounds + Craisins (Tue), Scooby Grahams + Apples (Wed), Blueberry Muffins + Raisins (Thu pre-stage), Juice. Request delivery Fri {FRI}.']},
     {day:'Fri',alert:false,delivery:'Cycle bridge delivery — stocks Mon/Tue/Wed of next cycle',
      breakfast:['Cocoa Chip BeneFIT Bar (1 each)','Diced Pears in Extra Light Syrup (1 each)','Assorted Fruit Juice (1 each)','1% Low-fat Milk / Choc Milk'],
-     lunch:['PB&J and Cheese Fun Lunch','— PB&J ({QL} total)','— String Cheese ({QL} total)','— Cheddar Goldfish Crackers ({QL} total)','Fresh Green Pepper Strips (69g / 2.4 oz bags)','Chilled Peaches (0.75 cups) — 5 cans','Milk'],
+     lunch:['PB&J and Cheese Fun Lunch','— PB&J ({QL} total)','— String Cheese ({QL} total)','— Cheddar Goldfish Crackers ({QL} total)','Fresh Green Pepper Strips (69g / 2.4 oz bags)','Chilled Peaches (0.75 cups) — {CANS} cans','Milk'],
      prepTemplate:['Receive &amp; unpack cycle bridge delivery — verify all Mon/Tue/Wed items on hand','Pack next Mon breakfast: {QB} Trix Cereal Bars, {QB} String Cheese, {QB} Juices, Milks','Bag Mon lunch veggie: Fresh Broccoli Florets at 68g (2.4 oz) each — 9 lbs total','&#128197; Switch app to Cycle 2 (Jun 29 – Jul 17) using the Cycle Starting dropdown in the top right']}
   ]
 ];
@@ -382,18 +440,18 @@ function milkTaskKey(wk,d){return `milktask-${cycleKey()}-${wk}-${d}`;}
 const orderTemplates=[
   {orderDay:{wk:0,d:1},deliverDay:{wk:0,d:2},coversDays:[{wk:0,d:3},{wk:0,d:4}],
    breakfast:[
-    {name:'WG Blueberry Muffins',             mealType:'B',qtyPer:1, usedOn:[{wk:0,d:3,meal:'Breakfast'}]},
-    {name:'Raisin Packets',                   mealType:'B',qtyPer:1, usedOn:[{wk:0,d:3,meal:'Breakfast'}]},
     {name:'Banana Choc Chunk BeneFIT Bars',   mealType:'B',qtyPer:1, usedOn:[{wk:0,d:4,meal:'Breakfast'}]},
     {name:'Peach Cups',                       mealType:'B',qtyPer:1, usedOn:[{wk:0,d:4,meal:'Breakfast'}]},
-    {name:'Assorted Fruit Juice',             mealType:'B',qtyPer:1, usedOn:[{wk:0,d:3,meal:'Breakfast'},{wk:0,d:4,meal:'Breakfast'}]},
+    {name:'Assorted Fruit Juice',             mealType:'B',qtyPer:1, usedOn:[{wk:0,d:4,meal:'Breakfast'},{wk:1,d:0,meal:'Breakfast'}]},
+    {name:'Cinnamon Toast Crunch Cereal Bars',mealType:'B',qtyPer:1, usedOn:[{wk:1,d:0,meal:'Breakfast'}]},
+    {name:'Low-Fat Mozzarella String Cheese', mealType:'B',qtyPer:1, usedOn:[{wk:1,d:0,meal:'Breakfast'}]},
    ],lunch:[
     {name:'Hamburger Buns',                   mealType:'L',qtyPer:1, usedOn:[{wk:0,d:3,meal:'Cheeseburger'}]},
-    {name:'Hamburger Patties',                mealType:'L',qtyPer:1, usedOn:[{wk:0,d:3,meal:'Cheeseburger'}]},
+    {name:'Hamburger Patties (beef)',         mealType:'L',qtyPer:1, usedOn:[{wk:0,d:3,meal:'Cheeseburger'}]},
     {name:'Sliced Cheese',                    mealType:'L',qtyPer:1, usedOn:[{wk:0,d:3,meal:'Cheeseburger'}]},
     {name:'Ketchup Packets',                  mealType:'L',qtyPer:1, usedOn:[{wk:0,d:3,meal:'Cheeseburger'}]},
     {name:'Seasoned Mixed Vegetables',        mealType:'L',qtyPer:1, usedOn:[{wk:0,d:3,meal:'Lunch side'}]},
-    {name:"Mott's Applesauce (48 oz jars)",   mealType:'L',qtyPer:1, usedOn:[{wk:0,d:3,meal:'Lunch side'}]},
+    {name:"Mott's Applesauce (48 oz jars — 7⅓ servings/jar)", mealType:'L',qtyPer:1,jarCalc:true, usedOn:[{wk:0,d:3,meal:'Rosy Applesauce (Lunch side)'}]},
     {name:'Gelatin packets (for Rosy Applesauce)',mealType:'L',flatQty:1,qtyPer:1,usedOn:[{wk:0,d:3,meal:'Mixed into Rosy Applesauce'}]},
     {name:'Pizza Fun Lunch Kits (Flatbread, Pizza Sauce, Mozz Cheese)',mealType:'L',qtyPer:1,usedOn:[{wk:0,d:4,meal:'Build-Your-Own Pizza'}]},
     {name:'Baby Carrots',                     mealType:'L',qtyPer:1, usedOn:[{wk:0,d:4,meal:'Lunch side'}]},
@@ -401,24 +459,25 @@ const orderTemplates=[
    ]},
   {orderDay:{wk:0,d:3},deliverDay:{wk:0,d:4},coversDays:[{wk:1,d:0},{wk:1,d:1},{wk:1,d:2}],
    breakfast:[
-    {name:'Cinnamon Toast Crunch Cereal Bars', mealType:'B',qtyPer:1, usedOn:[{wk:1,d:0,meal:'Breakfast'}]},
-    {name:'Low-Fat Mozzarella String Cheese',  mealType:'B',qtyPer:1, usedOn:[{wk:1,d:0,meal:'Breakfast'},{wk:1,d:2,meal:'Cereal Fun Lunch'}]},
+    {name:'Low-Fat Mozzarella String Cheese', mealType:'L',qtyPer:1, usedOn:[{wk:1,d:2,meal:'Cereal Fun Lunch'}]},
     {name:'Frosted Strawberry Pop-Tarts',      mealType:'B',qtyPer:1, usedOn:[{wk:1,d:1,meal:'Breakfast'}]},
     {name:'Assorted Craisins',                 mealType:'B',qtyPer:1, usedOn:[{wk:1,d:1,meal:'Breakfast'}]},
     {name:'Bug Bites Graham Crackers',         mealType:'B',qtyPer:1, usedOn:[{wk:1,d:2,meal:'Breakfast'}]},
     {name:'Fresh Red Delicious Apples',        mealType:'B',qtyPer:1, usedOn:[{wk:1,d:2,meal:'Breakfast'}]},
-    {name:'Assorted Fruit Juice',              mealType:'B',qtyPer:1, usedOn:[{wk:1,d:0,meal:'Breakfast'},{wk:1,d:1,meal:'Breakfast'},{wk:1,d:2,meal:'Breakfast'}]},
+    {name:'Assorted Fruit Juice',              mealType:'B',qtyPer:1, usedOn:[{wk:1,d:1,meal:'Breakfast'},{wk:1,d:2,meal:'Breakfast'},{wk:1,d:3,meal:'Breakfast'}]},
+    {name:'WG Apple Cinnamon Muffins',         mealType:'B',qtyPer:1, usedOn:[{wk:1,d:3,meal:'Breakfast'}]},
+    {name:'Raisin Packets',                    mealType:'B',qtyPer:1, usedOn:[{wk:1,d:3,meal:'Breakfast'}]},
    ],lunch:[
     {name:'Sandwich Buns',                     mealType:'L',qtyPer:1, usedOn:[{wk:1,d:0,meal:'Turkey & Cheese Sandwich'}]},
     {name:'Sliced Cheese',                     mealType:'L',qtyPer:2, usedOn:[{wk:1,d:0,meal:'Turkey & Cheese Sandwich'}]},
     {name:'Deli Turkey',                       mealType:'L',qtyPer:3, usedOn:[{wk:1,d:0,meal:'Turkey & Cheese Sandwich'}]},
     {name:'Mayonnaise Packets (Light)',         mealType:'L',qtyPer:1, usedOn:[{wk:1,d:0,meal:'Turkey & Cheese Sandwich'}]},
     {name:'Grape Tomatoes',                    mealType:'L',qtyPer:1, usedOn:[{wk:1,d:0,meal:'Lunch side'}]},
-    {name:'Chilled Mixed Fruit',               mealType:'L',qtyPer:1, usedOn:[{wk:1,d:0,meal:'Lunch side'}]},
+    {name:'Chilled Mixed Fruit (#10 cans — 17 servings/can)', mealType:'L',qtyPer:1,canCalc:true, usedOn:[{wk:1,d:0,meal:'Lunch side'}]},
     {name:'Cheese Stuffed Breadsticks (2 each)',mealType:'L',qtyPer:2,usedOn:[{wk:1,d:1,meal:'Main entree'}]},
     {name:'Marinara Sauce Packets',            mealType:'L',qtyPer:1, usedOn:[{wk:1,d:1,meal:'Breadstick side'}]},
     {name:'Steamed Peas',                      mealType:'L',qtyPer:1, usedOn:[{wk:1,d:1,meal:'Lunch side'}]},
-    {name:'Cinnamon Applesauce Cups',          mealType:'L',qtyPer:1, usedOn:[{wk:1,d:1,meal:'Lunch side'}]},
+    {name:'Cinnamon Applesauce (48 oz jars — 7⅓ servings/jar)', mealType:'L',qtyPer:1,jarCalc:true, usedOn:[{wk:1,d:1,meal:'Lunch side'}]},
     {name:'Cocoa Puffs Cereal',                mealType:'L',qtyPer:1, usedOn:[{wk:1,d:2,meal:'Cereal Fun Lunch'}]},
     {name:'Yogurt',                            mealType:'L',qtyPer:1, usedOn:[{wk:1,d:2,meal:'Cereal Fun Lunch'}]},
     {name:'Baby Carrots',                      mealType:'L',qtyPer:1, usedOn:[{wk:1,d:2,meal:'Lunch side'}]},
@@ -426,11 +485,11 @@ const orderTemplates=[
    ]},
   {orderDay:{wk:1,d:1},deliverDay:{wk:1,d:2},coversDays:[{wk:1,d:3},{wk:1,d:4}],
    breakfast:[
-    {name:'WG Banana Muffins',                mealType:'B',qtyPer:1, usedOn:[{wk:1,d:3,meal:'Breakfast'}]},
-    {name:'Raisin Packets',                   mealType:'B',qtyPer:1, usedOn:[{wk:1,d:3,meal:'Breakfast'}]},
     {name:'French Toast BeneFIT Bars',        mealType:'B',qtyPer:1, usedOn:[{wk:1,d:4,meal:'Breakfast'}]},
     {name:'Mixed Berries Cups',               mealType:'B',qtyPer:1, usedOn:[{wk:1,d:4,meal:'Breakfast'}]},
-    {name:'Assorted Fruit Juice',             mealType:'B',qtyPer:1, usedOn:[{wk:1,d:3,meal:'Breakfast'},{wk:1,d:4,meal:'Breakfast'}]},
+    {name:'Assorted Fruit Juice',             mealType:'B',qtyPer:1, usedOn:[{wk:1,d:3,meal:'Breakfast'},{wk:1,d:4,meal:'Breakfast'},{wk:2,d:0,meal:'Breakfast'}]},
+    {name:'Cocoa Puffs Cereal Bars',          mealType:'B',qtyPer:1, usedOn:[{wk:2,d:0,meal:'Breakfast'}]},
+    {name:'Low-Fat Mozzarella String Cheese', mealType:'B',qtyPer:1, usedOn:[{wk:2,d:0,meal:'Breakfast'}]},
    ],lunch:[
     {name:'Turkey Hot Dogs',                  mealType:'L',qtyPer:1, usedOn:[{wk:1,d:3,meal:'Turkey Hot Dog'}]},
     {name:'Hot Dog Buns',                     mealType:'L',qtyPer:1, usedOn:[{wk:1,d:3,meal:'Turkey Hot Dog'}]},
@@ -444,19 +503,20 @@ const orderTemplates=[
    ]},
   {orderDay:{wk:1,d:3},deliverDay:{wk:1,d:4},coversDays:[{wk:2,d:0},{wk:2,d:1},{wk:2,d:2}],
    breakfast:[
-    {name:'Cocoa Puffs Cereal Bars',          mealType:'B',qtyPer:1, usedOn:[{wk:2,d:0,meal:'Breakfast'}]},
-    {name:'Low-Fat Mozzarella String Cheese', mealType:'B',qtyPer:1, usedOn:[{wk:2,d:0,meal:'Breakfast'},{wk:2,d:2,meal:'Cereal Fun Lunch'}]},
+    {name:'Low-Fat Mozzarella String Cheese', mealType:'L',qtyPer:1, usedOn:[{wk:2,d:2,meal:'Cereal Fun Lunch'}]},
     {name:'Chocolate Chip Breakfast Rounds',  mealType:'B',qtyPer:1, usedOn:[{wk:2,d:1,meal:'Breakfast'}]},
     {name:'Assorted Craisins',                mealType:'B',qtyPer:1, usedOn:[{wk:2,d:1,meal:'Breakfast'}]},
     {name:'Tiger Graham Crackers',            mealType:'B',qtyPer:1, usedOn:[{wk:2,d:2,meal:'Breakfast'}]},
     {name:'Fresh Red Delicious Apples',       mealType:'B',qtyPer:1, usedOn:[{wk:2,d:2,meal:'Breakfast'}]},
-    {name:'Assorted Fruit Juice',             mealType:'B',qtyPer:1, usedOn:[{wk:2,d:0,meal:'Breakfast'},{wk:2,d:1,meal:'Breakfast'},{wk:2,d:2,meal:'Breakfast'}]},
+    {name:'Chocolate Chip Muffins',           mealType:'B',qtyPer:1, usedOn:[{wk:2,d:3,meal:'Breakfast (pre-staged for Thu scramble)'}]},
+    {name:'Raisin Packets',                   mealType:'B',qtyPer:1, usedOn:[{wk:2,d:3,meal:'Breakfast (pre-staged for Thu scramble)'}]},
+    {name:'Assorted Fruit Juice',             mealType:'B',qtyPer:1, usedOn:[{wk:2,d:1,meal:'Breakfast'},{wk:2,d:2,meal:'Breakfast'},{wk:2,d:3,meal:'Breakfast'}]},
    ],lunch:[
     {name:'Salami',                           mealType:'L',qtyPer:6, usedOn:[{wk:2,d:0,meal:'Salami & Cheese Sandwich'}]},
     {name:'Sliced Cheese',                    mealType:'L',qtyPer:2, usedOn:[{wk:2,d:0,meal:'Salami & Cheese Sandwich'}]},
     {name:'Sandwich Buns',                    mealType:'L',qtyPer:1, usedOn:[{wk:2,d:0,meal:'Salami & Cheese Sandwich'}]},
     {name:'Fresh Celery Sticks',              mealType:'L',qtyPer:1, usedOn:[{wk:2,d:0,meal:'Lunch side'}]},
-    {name:'Apple Cinnamon Slices',            mealType:'L',qtyPer:1, usedOn:[{wk:2,d:0,meal:'Lunch side'}]},
+    {name:'Apple Cinnamon Slices (#10 cans — 17 servings/can, add ¾ tsp cinnamon per can)', mealType:'L',qtyPer:1,canCalc:true, usedOn:[{wk:2,d:0,meal:'Lunch side'}]},
     {name:'Pre-made Cheese Pizza',            mealType:'L',qtyPer:1, usedOn:[{wk:2,d:1,meal:'Main entree'}]},
     {name:'Seasoned Carrots',                 mealType:'L',qtyPer:1, usedOn:[{wk:2,d:1,meal:'Lunch side'}]},
     {name:'Mixed Berries',                    mealType:'L',qtyPer:1, usedOn:[{wk:2,d:1,meal:'Lunch side'}]},
@@ -464,54 +524,56 @@ const orderTemplates=[
     {name:'Yogurt',                           mealType:'L',qtyPer:1, usedOn:[{wk:2,d:2,meal:'Cereal Fun Lunch'}]},
     {name:'String Cheese',                    mealType:'L',qtyPer:1, usedOn:[{wk:2,d:2,meal:'Cereal Fun Lunch'}]},
     {name:'Sliced Cucumbers',                 mealType:'L',qtyPer:1, usedOn:[{wk:2,d:2,meal:'Lunch side'}]},
-    {name:'Rosy Applesauce',                  mealType:'L',qtyPer:1, usedOn:[{wk:2,d:2,meal:'Lunch side'}]},
+    {name:"Mott's Applesauce (48 oz jars — 7⅓ servings/jar)", mealType:'L',qtyPer:1,jarCalc:true, usedOn:[{wk:2,d:2,meal:'Rosy Applesauce (Lunch side)'}]},
     {name:'Gelatin packets (for Rosy Applesauce)',mealType:'L',flatQty:1,qtyPer:1,usedOn:[{wk:2,d:2,meal:'Mixed into Rosy Applesauce'}]},
    ]},
   {orderDay:{wk:2,d:1},deliverDay:{wk:2,d:2},coversDays:[{wk:2,d:3},{wk:2,d:4}],
    breakfast:[
-    {name:'Chocolate Chip Muffins',           mealType:'B',qtyPer:1, usedOn:[{wk:2,d:3,meal:'Breakfast'}]},
-    {name:'Raisin Packets',                   mealType:'B',qtyPer:1, usedOn:[{wk:2,d:3,meal:'Breakfast'}]},
     {name:'Cocoa Chip BeneFIT Bars',          mealType:'B',qtyPer:1, usedOn:[{wk:2,d:4,meal:'Breakfast'}]},
     {name:'Diced Pears Cups',                 mealType:'B',qtyPer:1, usedOn:[{wk:2,d:4,meal:'Breakfast'}]},
-    {name:'Assorted Fruit Juice',             mealType:'B',qtyPer:1, usedOn:[{wk:2,d:3,meal:'Breakfast'},{wk:2,d:4,meal:'Breakfast'}]},
+    {name:'Assorted Fruit Juice',             mealType:'B',qtyPer:1, usedOn:[{wk:2,d:4,meal:'Breakfast'},{wk:0,d:0,meal:'Breakfast'}]},
+    {name:'Trix Cereal Bars',                 mealType:'B',qtyPer:1, usedOn:[{wk:0,d:0,meal:'Breakfast — next cycle Mon'}]},
+    {name:'Low-Fat Mozzarella String Cheese', mealType:'B',qtyPer:1, usedOn:[{wk:0,d:0,meal:'Breakfast'}]},
    ],lunch:[
     {name:'Crispy Chicken Patties',           mealType:'L',qtyPer:1, usedOn:[{wk:2,d:3,meal:'Chicken Patty Sandwich'}]},
     {name:'Chicken Sandwich Buns',            mealType:'L',qtyPer:1, usedOn:[{wk:2,d:3,meal:'Chicken Patty Sandwich'}]},
     {name:'Barbecue Sauce Packets',           mealType:'L',qtyPer:1, usedOn:[{wk:2,d:3,meal:'Chicken Patty Sandwich'}]},
-    {name:'BBQ Baked Beans (#10 Cans)',        mealType:'L',qtyPer:1, usedOn:[{wk:2,d:3,meal:'Lunch side'}]},
+    {name:"Bush's BBQ Baked Beans (#10 cans — 16⅔ servings/can, add 1.5 cups BBQ sauce per can)", mealType:'L',qtyPer:1,beanCalc:true, usedOn:[{wk:2,d:3,meal:'Lunch side'}]},
     {name:'Fresh Pears',                      mealType:'L',qtyPer:1, usedOn:[{wk:2,d:3,meal:'Lunch side'}]},
     {name:'PB&J and Cheese Fun Lunch Kits',   mealType:'L',qtyPer:1, usedOn:[{wk:2,d:4,meal:'PB&J Fun Lunch'}]},
     {name:'Fresh Green Peppers',              mealType:'L',qtyPer:1, usedOn:[{wk:2,d:4,meal:'Lunch side'}]},
-    {name:'Chilled Peaches (#10 Cans)',        mealType:'L',qtyPer:1, usedOn:[{wk:2,d:4,meal:'Lunch side'}]},
+    {name:'Chilled Peaches (#10 cans — 17 servings/can)', mealType:'L',qtyPer:1,canCalc:true, usedOn:[{wk:2,d:4,meal:'Lunch side'}]},
    ]}
   ,
   // ── ORDER 6: CYCLE BRIDGE — placed Thu Wk3, delivered Fri Wk3, covers Mon/Tue/Wed of NEXT CYCLE Wk1
-  // Identical items to Order 2. coversDays uses wk:0 to reference next cycle's Week 1.
+  // Stocks the FIRST 3 days of the next cycle = Week 1 menu (Ham&Cheese Mon, Nuggets Tue, Trix Fun Lunch Wed) + Tue/Wed/Thu breakfasts. coversDays uses wk:0 to reference next cycle's Week 1.
   {orderDay:{wk:2,d:3},deliverDay:{wk:2,d:4},coversDays:[{wk:0,d:0},{wk:0,d:1},{wk:0,d:2}],
    _isBridgeOrder:true,
    breakfast:[
-    {name:'Cinnamon Toast Crunch Cereal Bars', mealType:'B',qtyPer:1, usedOn:[{wk:0,d:0,meal:'Breakfast — next cycle Mon'}]},
-    {name:'Low-Fat Mozzarella String Cheese',  mealType:'B',qtyPer:1, usedOn:[{wk:0,d:0,meal:'Breakfast — next cycle Mon'},{wk:0,d:2,meal:'Cereal Fun Lunch — next cycle Wed'}]},
-    {name:'Frosted Strawberry Pop-Tarts',      mealType:'B',qtyPer:1, usedOn:[{wk:0,d:1,meal:'Breakfast — next cycle Tue'}]},
+    {name:'Low-Fat Mozzarella String Cheese (cereal lunch)',mealType:'L',qtyPer:1, usedOn:[{wk:0,d:2,meal:'Trix Cereal Fun Lunch — next cycle Wed'}]},
+    {name:'Banana Choc Chip Oatmeal Rounds',   mealType:'B',qtyPer:1, usedOn:[{wk:0,d:1,meal:'Breakfast — next cycle Tue'}]},
     {name:'Assorted Craisins',                 mealType:'B',qtyPer:1, usedOn:[{wk:0,d:1,meal:'Breakfast — next cycle Tue'}]},
-    {name:'Bug Bites Graham Crackers',         mealType:'B',qtyPer:1, usedOn:[{wk:0,d:2,meal:'Breakfast — next cycle Wed'}]},
+    {name:'Scooby Doo Graham Crackers',        mealType:'B',qtyPer:1, usedOn:[{wk:0,d:2,meal:'Breakfast — next cycle Wed'}]},
     {name:'Fresh Red Delicious Apples',        mealType:'B',qtyPer:1, usedOn:[{wk:0,d:2,meal:'Breakfast — next cycle Wed'}]},
-    {name:'Assorted Fruit Juice',              mealType:'B',qtyPer:1, usedOn:[{wk:0,d:0,meal:'Breakfast'},{wk:0,d:1,meal:'Breakfast'},{wk:0,d:2,meal:'Breakfast'}]},
+    {name:'WG Blueberry Muffins',              mealType:'B',qtyPer:1, usedOn:[{wk:0,d:3,meal:'Breakfast — next cycle Thu (pre-staged for Thu scramble)'}]},
+    {name:'Raisin Packets',                    mealType:'B',qtyPer:1, usedOn:[{wk:0,d:3,meal:'Breakfast — next cycle Thu (pre-staged for Thu scramble)'}]},
+    {name:'Assorted Fruit Juice',              mealType:'B',qtyPer:1, usedOn:[{wk:0,d:1,meal:'Breakfast'},{wk:0,d:2,meal:'Breakfast'},{wk:0,d:3,meal:'Breakfast'}]},
    ],lunch:[
-    {name:'Sandwich Buns',                     mealType:'L',qtyPer:1, usedOn:[{wk:0,d:0,meal:'Turkey & Cheese Sandwich — next cycle Mon'}]},
-    {name:'Sliced Cheese',                     mealType:'L',qtyPer:2, usedOn:[{wk:0,d:0,meal:'Turkey & Cheese Sandwich — next cycle Mon'}]},
-    {name:'Deli Turkey',                       mealType:'L',qtyPer:3, usedOn:[{wk:0,d:0,meal:'Turkey & Cheese Sandwich — next cycle Mon'}]},
-    {name:'Mayonnaise Packets (Light)',         mealType:'L',qtyPer:1, usedOn:[{wk:0,d:0,meal:'Turkey & Cheese Sandwich — next cycle Mon'}]},
-    {name:'Grape Tomatoes',                    mealType:'L',qtyPer:1, usedOn:[{wk:0,d:0,meal:'Lunch side — next cycle Mon'}]},
-    {name:'Chilled Mixed Fruit',               mealType:'L',qtyPer:1, usedOn:[{wk:0,d:0,meal:'Lunch side — next cycle Mon'}]},
-    {name:'Cheese Stuffed Breadsticks (2 each)',mealType:'L',qtyPer:2,usedOn:[{wk:0,d:1,meal:'Main entree — next cycle Tue'}]},
-    {name:'Marinara Sauce Packets',            mealType:'L',qtyPer:1, usedOn:[{wk:0,d:1,meal:'Breadstick side — next cycle Tue'}]},
-    {name:'Steamed Peas',                      mealType:'L',qtyPer:1, usedOn:[{wk:0,d:1,meal:'Lunch side — next cycle Tue'}]},
-    {name:'Cinnamon Applesauce Cups',          mealType:'L',qtyPer:1, usedOn:[{wk:0,d:1,meal:'Lunch side — next cycle Tue'}]},
-    {name:'Cocoa Puffs Cereal',                mealType:'L',qtyPer:1, usedOn:[{wk:0,d:2,meal:'Cereal Fun Lunch — next cycle Wed'}]},
-    {name:'Yogurt',                            mealType:'L',qtyPer:1, usedOn:[{wk:0,d:2,meal:'Cereal Fun Lunch — next cycle Wed'}]},
-    {name:'Baby Carrots',                      mealType:'L',qtyPer:1, usedOn:[{wk:0,d:2,meal:'Lunch side — next cycle Wed'}]},
-    {name:'Fresh Oranges',                     mealType:'L',qtyPer:1, usedOn:[{wk:0,d:2,meal:'Lunch side — next cycle Wed'}]},
+    {name:'Sandwich Buns',                     mealType:'L',qtyPer:1, usedOn:[{wk:0,d:0,meal:'Ham & Cheese Sandwich — next cycle Mon'}]},
+    {name:'Deli Ham',                          mealType:'L',qtyPer:3, usedOn:[{wk:0,d:0,meal:'Ham & Cheese Sandwich — next cycle Mon'}]},
+    {name:'Sliced Cheese',                     mealType:'L',qtyPer:2, usedOn:[{wk:0,d:0,meal:'Ham & Cheese Sandwich — next cycle Mon'}]},
+    {name:'Mayonnaise Packets (Light)',         mealType:'L',qtyPer:1, usedOn:[{wk:0,d:0,meal:'Ham & Cheese Sandwich — next cycle Mon'}]},
+    {name:'Fresh Broccoli Florets',            mealType:'L',qtyPer:1, usedOn:[{wk:0,d:0,meal:'Lunch side — next cycle Mon'}]},
+    {name:'Chilled Diced Pears (#10 cans — 17 servings/can)', mealType:'L',qtyPer:1,canCalc:true, usedOn:[{wk:0,d:0,meal:'Lunch side — next cycle Mon'}]},
+    {name:'Chicken Nuggets (5 per child)',     mealType:'L',qtyPer:5, usedOn:[{wk:0,d:1,meal:'Main entree — next cycle Tue'}]},
+    {name:'Low-Fat Mozzarella String Cheese',  mealType:'L',qtyPer:1, usedOn:[{wk:0,d:1,meal:'Lunch side — next cycle Tue'}]},
+    {name:'Barbecue Sauce Packets',            mealType:'L',qtyPer:1, usedOn:[{wk:0,d:1,meal:'Nugget dip — next cycle Tue'}]},
+    {name:'Savory Green Beans',                mealType:'L',qtyPer:1, usedOn:[{wk:0,d:1,meal:'Lunch side — next cycle Tue'}]},
+    {name:'Fresh Red Delicious Apples',        mealType:'L',qtyPer:1, usedOn:[{wk:0,d:1,meal:'Lunch fruit — next cycle Tue'}]},
+    {name:'Trix Cereal',                       mealType:'L',qtyPer:1, usedOn:[{wk:0,d:2,meal:'Trix Cereal Fun Lunch — next cycle Wed'}]},
+    {name:'Yogurt',                            mealType:'L',qtyPer:1, usedOn:[{wk:0,d:2,meal:'Trix Cereal Fun Lunch — next cycle Wed'}]},
+    {name:'Sliced Cucumbers',                  mealType:'L',qtyPer:1, usedOn:[{wk:0,d:2,meal:'Lunch side — next cycle Wed'}]},
+    {name:'Fresh Oranges',                     mealType:'L',qtyPer:1, usedOn:[{wk:0,d:2,meal:'Lunch fruit — next cycle Wed'}]},
    ]}
 ];
 
@@ -535,13 +597,19 @@ const cashierTemplate=[
 
 // ── Qty substitution ──────────────────────────────────────────────────────────
 function applyQty(str){
+  const jars=Math.ceil(qtyL/(22/3));       // 48oz applesauce jar = 7⅓ servings at 0.75 cups
+  const cans=Math.ceil(qtyL/17);           // #10 can = 17 servings at 0.75 cups
+  const beans=Math.ceil(qtyL/(50/3));      // Bush's #10 = 16.67 servings
   return str
     .replace(/\{QB\}/g,qtyB)
     .replace(/\{QL\}/g,qtyL)
     .replace(/\{QL2\}/g,qtyL*2)
     .replace(/\{QL3\}/g,qtyL*3)
     .replace(/\{QL5\}/g,qtyL*5)
-    .replace(/\{QL6\}/g,qtyL*6);
+    .replace(/\{QL6\}/g,qtyL*6)
+    .replace(/\{JARS\}/g,jars)
+    .replace(/\{CANS\}/g,cans)
+    .replace(/\{BEANS\}/g,beans);
 }
 
 // ── Prep template resolution ──────────────────────────────────────────────────
@@ -612,7 +680,7 @@ function renderDays(){
       <div class="day-date">${fmt(date)}</div>
       <span class="pill pill-b">Breakfast</span><br>
       <span class="pill pill-l">Lunch</span>
-      ${d.alert?`<br><span class="pill pill-alert">&#9888; Order deadline</span>`:''}
+      ${d.alert?`<br><span class="pill pill-alert">&#9888; ${milkDeadlineDays[`${currentWeek}-${i}`]?'Milk':'Food'} order deadline</span>`:''}
       ${d.delivery?`<br><span class="pill pill-delivery">&#128666; Delivery</span>`:''}
     </div>`;
   }).join('');
@@ -635,7 +703,7 @@ function selectDay(i){
   const date=cd(currentWeek,i);
   const panel=document.getElementById('detailPanel');
   panel.style.display='block';
-  document.getElementById('detailTitle').textContent=`${tpl.day}, ${fmt(date)}`;
+  document.getElementById('detailTitle').textContent=fmt(date);
   detailOpen=true;
   document.getElementById('detailBody').style.display='block';
   document.getElementById('detailArrow').classList.add('open');
@@ -645,7 +713,10 @@ function selectDay(i){
 
   // Build prep items: system order task (if this day has a deadline) + template tasks + custom tasks
   let bodyHtml='';
-  if(tpl.alert) bodyHtml+=`<div class="notice notice-alert">&#9888; Order deadline: ${tpl.alert}</div>`;
+  if(tpl.alert){
+    const isMilk=milkDeadlineDays[`${wk}-${i}`];
+    bodyHtml+=`<div class="notice notice-alert">&#9888; ${isMilk?'Milk':'Food'} order deadline: ${tpl.alert}</div>`;
+  }
   if(tpl.delivery) bodyHtml+=`<div class="notice notice-delivery">&#128666; ${tpl.delivery}</div>`;
 
   // Breakfast & Lunch cols
@@ -661,11 +732,11 @@ function selectDay(i){
   if(orderDeadlineMap[oKey]!==undefined){
     const oi=orderDeadlineMap[oKey];
     const oDate=fmt(cd(orderTemplates[oi].deliverDay.wk,orderTemplates[oi].deliverDay.d));
-    const coverDates=orderTemplates[oi].coversDays.map(c=>fmtShort(cd(c.wk,c.d))).join(' & ');
+    const coverDates=orderTemplates[oi].coversDays.map(c=>fmtShort(orderDayDate(orderTemplates[oi],c.wk,c.d))).join(' & ');
     sysTasks.push({id:orderTaskKey(wk,i), label:`&#128722; Submit food order by end of day — delivered ${oDate}, covers ${coverDates}`});
   }
   if(milkDeadlineDays[oKey]){
-    const milkDeliverDate=fmt(cd(wk,3)); // Milk arrives Thursday
+    const milkDeliverDate=fmt(addDays(cd(wk,3),7)); // Milk arrives NEXT week Thursday
     sysTasks.push({id:milkTaskKey(wk,i), label:`&#127868; Submit milk order by end of day — delivered ${milkDeliverDate}`});
   }
   const prepItems=tpl.prepTemplate.map(t=>resolvePrep(t,wk,i));
@@ -823,11 +894,26 @@ function mkCustOrdId(cycle,oi,ii){return `co-${cycle}-${oi}-${ii}`;}
 
 // ── Qty needed calculation ────────────────────────────────────────────────────
 function calcQtyNeeded(item){
-  // flatQty: item is ordered as a fixed quantity per order window, not per person
   if(item.flatQty) return item.flatQty * item.usedOn.length;
+  if(item.jarCalc)  return Math.ceil(qtyL/(22/3))  * item.usedOn.length;
+  if(item.canCalc)  return Math.ceil(qtyL/17)       * item.usedOn.length;
+  if(item.beanCalc) return Math.ceil(qtyL/(50/3))   * item.usedOn.length;
+  // extraL: first usedOn entry is breakfast qty, remaining are lunch qty
+  if(item.extraL)   return qtyB + (item.usedOn.length - 1) * qtyL;
   return item.usedOn.length * item.qtyPer * (item.mealType==='B' ? qtyB : qtyL);
 }
-function invKey(oi,type,ii){return `inv-${oi}-${type}-${ii}`;}
+function invKey(oi,type,ii){return `inv-${cycleKey()}-${oi}-${type}-${ii}`;}
+function ovKey(oi,type,ii){return `ov-${cycleKey()}-${oi}-${type}-${ii}`;}
+function setOverride(k,val){ if(val===''||val===null||val===undefined){ delete orderOverrides[k]; } else { orderOverrides[k]=Math.max(0,parseInt(val)||0); } }
+// Effective qty to order for a line: manual override if set, else calc minus on-hand.
+function effToOrder(oi,type,ii,item){
+  const ov=orderOverrides[ovKey(oi,type,ii)];
+  if(ov!==undefined) return Math.max(0,ov);
+  const needed=calcQtyNeeded(item);
+  const onHand=parseInt(inventory[invKey(oi,type,ii)])||0;
+  return Math.max(0,needed-onHand);
+}
+function isOverridden(oi,type,ii){ return orderOverrides[ovKey(oi,type,ii)]!==undefined; }
 
 function refreshQtyChip(oi,type,ii){
   const ik=invKey(oi,type,ii);
@@ -836,40 +922,54 @@ function refreshQtyChip(oi,type,ii){
   if(!item) return;
   const needed=calcQtyNeeded(item);
   const onHand=parseInt(inventory[ik])||0;
-  const toOrder=Math.max(0,needed-onHand);
+  const toOrder=effToOrder(oi,type,ii,item);
+  const manual=isOverridden(oi,type,ii);
   const chipEl=document.getElementById(`chip-${ik}`);
   const formulaEl=document.getElementById(`formula-${ik}`);
   if(chipEl){
-    if(toOrder===0){chipEl.textContent='✓ Have enough';chipEl.className='qty-chip ok';}
-    else{chipEl.textContent=`Order ${toOrder}`;chipEl.className='qty-chip need';}
+    if(toOrder===0){chipEl.textContent=manual?'✓ Skip (manual)':'✓ Have enough';chipEl.className='qty-chip '+(manual?'exact':'ok');}
+    else{chipEl.textContent=`Order ${toOrder}${manual?' (manual)':''}`;chipEl.className='qty-chip need';}
   }
   if(formulaEl){
     const dayQty=item.mealType==='B'?qtyB:qtyL;
-    if(item.flatQty){
-      formulaEl.textContent=`Need: 1 packet per order = ${needed}`;
-    } else {
+    if(item.flatQty)      formulaEl.textContent=`Need: 1 packet per order = ${needed}`;
+    else if(item.jarCalc) formulaEl.textContent=`Need: ⌈${qtyL} ÷ 7⅓ servings/jar⌉ = ${needed} jars`;
+    else if(item.canCalc) formulaEl.textContent=`Need: ⌈${qtyL} ÷ 17 servings/#10 can⌉ = ${needed} cans`;
+    else if(item.beanCalc)formulaEl.textContent=`Need: ⌈${qtyL} ÷ 16⅔ servings/#10 can⌉ = ${needed} cans (add 1.5 cups BBQ sauce per can)`;
+    else if(item.extraL)  formulaEl.textContent=`Need: ${qtyB} (breakfast) + ${(item.usedOn.length-1)*qtyL} (cereal lunch) = ${needed}`;
+    else {
       const perEntry=item.qtyPer>1?`${item.qtyPer}×${dayQty}`:dayQty;
-      const parts=item.usedOn.map(()=>perEntry);
-      formulaEl.textContent=`Need: ${parts.join(' + ')} = ${needed}${item.qtyPer>1?' ('+item.qtyPer+' per person)':''}`;
+      formulaEl.textContent=`Need: ${item.usedOn.map(()=>perEntry).join(' + ')} = ${needed}${item.qtyPer>1?' ('+item.qtyPer+' per person)':''}`;
     }
   }
 }
 
 function renderOrderItem(item,key,oi,type,ii){
+  const o=orderTemplates[oi];
   const chk=orderChecks[key];
   const isDouble=item.usedOn.length>1;
-  const usedTags=item.usedOn.map(u=>`<span class="used-tag">${fmtShort(cd(u.wk,u.d))} — ${u.meal}</span>`).join('');
+  const usedTags=item.usedOn.map(u=>`<span class="used-tag">${fmtShort(orderDayDate(o,u.wk,u.d))} — ${u.meal}</span>`).join('');
   const doubleBadge=isDouble?`<span class="double-badge">&#215;${item.usedOn.length} days — check qty!</span>`:'';
   const ik=invKey(oi,type,ii);
+  const ovk=ovKey(oi,type,ii);
+  const ovVal=orderOverrides[ovk]!==undefined?orderOverrides[ovk]:'';
+  const manual=isOverridden(oi,type,ii);
   const needed=calcQtyNeeded(item);
   const onHand=parseInt(inventory[ik])||0;
-  const toOrder=Math.max(0,needed-onHand);
-  const chipClass=toOrder===0?'ok':'need';
-  const chipText=toOrder===0?'✓ Have enough':`Order ${toOrder}`;
-  const dayQty=item.mealType==='B'?qtyB:qtyL;
+  const toOrder=effToOrder(oi,type,ii,item);
+  const chipClass=toOrder===0?(manual?'exact':'ok'):'need';
+  const chipText=toOrder===0?(manual?'✓ Skip (manual)':'✓ Have enough'):`Order ${toOrder}${manual?' (manual)':''}`;
   const formula = item.flatQty
     ? `Need: 1 packet per order${item.usedOn.length>1?' × '+item.usedOn.length+' days':''} = ${needed}`
-    : (() => { const perEntry=item.qtyPer>1?`${item.qtyPer}×${dayQty}`:dayQty; return `Need: ${item.usedOn.map(()=>perEntry).join(' + ')} = ${needed}${item.qtyPer>1?' ('+item.qtyPer+' per person)':''}`; })();
+    : item.jarCalc
+    ? `Need: ⌈${qtyL} ÷ 7⅓ servings/jar⌉ = ${needed} jars`
+    : item.canCalc
+    ? `Need: ⌈${qtyL} ÷ 17 servings/#10 can⌉ = ${needed} cans`
+    : item.beanCalc
+    ? `Need: ⌈${qtyL} ÷ 16⅔ servings/#10 can⌉ = ${needed} cans (add 1.5 cups BBQ sauce per can)`
+    : item.extraL
+    ? `Need: ${qtyB} (breakfast) + ${(item.usedOn.length-1)*qtyL} (cereal lunch) = ${needed}`
+    : (() => { const dayQty=item.mealType==='B'?qtyB:qtyL; const perEntry=item.qtyPer>1?`${item.qtyPer}×${dayQty}`:dayQty; return `Need: ${item.usedOn.map(()=>perEntry).join(' + ')} = ${needed}${item.qtyPer>1?' ('+item.qtyPer+' per person)':''}`; })();
   return `<div class="order-row${chk?' done':''}" id="orow-${key}">
     <input type="checkbox" id="ocb-${key}"${chk?' checked':''} onchange="toggleOrder('${key}',${oi})">
     <div class="order-row-body">
@@ -880,6 +980,11 @@ function renderOrderItem(item,key,oi,type,ii){
           <label for="inv-${ik}">On hand:</label>
           <input type="number" id="inv-${ik}" value="${onHand||''}" min="0" placeholder="0"
             oninput="inventory['${ik}']=parseInt(this.value)||0;refreshQtyChip(${oi},'${type}',${ii})">
+        </div>
+        <div class="inv-field">
+          <label for="ov-${ovk}">Override:</label>
+          <input type="number" id="ov-${ovk}" value="${ovVal}" min="0" placeholder="auto"
+            oninput="setOverride('${ovk}',this.value);refreshQtyChip(${oi},'${type}',${ii})">
         </div>
         <span class="qty-chip ${chipClass}" id="chip-${ik}">${chipText}</span>
         <span class="qty-formula" id="formula-${ik}">${formula}</span>
@@ -903,7 +1008,14 @@ function renderOrders(){
   document.getElementById('orderList').innerHTML=orderTemplates.map((o,oi)=>{
     const orderDate=fmt(cd(o.orderDay.wk,o.orderDay.d));
     const deliverDate=fmt(cd(o.deliverDay.wk,o.deliverDay.d));
-    const coverDates=o.coversDays.map(c=>fmt(cd(c.wk,c.d))).join(', ');
+    const coverDates=o.coversDays.map(c=>fmt(orderDayDate(o,c.wk,c.d))).join(', ');
+    // Breakfast served days that fall OUTSIDE this order's covered (lunch) days = pre-staged breakfast
+    const coverSet=new Set(o.coversDays.map(c=>orderDayDate(o,c.wk,c.d).getTime()));
+    const bfastDays=[...new Map(o.breakfast.filter(it=>it.mealType==='B')
+        .flatMap(it=>it.usedOn.map(u=>orderDayDate(o,u.wk,u.d)))
+        .map(dt=>[dt.getTime(),dt])).values()];
+    const extraBfast=bfastDays.filter(dt=>!coverSet.has(dt.getTime())).sort((a,b)=>a-b);
+    const bfastNote=extraBfast.length?` &amp; Breakfast ${extraBfast.map(fmt).join(', ')}`:'';
     const {total,done}=getOrderProgress(oi);
     const allDone=total>0&&done===total;
     const bItems=o.breakfast.map((item,ii)=>renderOrderItem(item,mkOrdId(cycle,oi,'b',ii),oi,'b',ii)).join('');
@@ -922,7 +1034,7 @@ function renderOrders(){
       <div class="order-header" onclick="toggleOrder_section(${oi})">
         <div class="order-header-left">
           <div class="order-header-title">${o._isBridgeOrder?'&#128259; CYCLE BRIDGE — ':''} Order by end of ${orderDate}</div>
-          <div class="order-header-sub">${o._isBridgeOrder?'Covers <strong>next cycle</strong> ':'Delivered '+deliverDate+' — covers '}${coverDates}</div>
+          <div class="order-header-sub">Delivered ${deliverDate} — covers ${o._isBridgeOrder?'<strong>next cycle</strong> ':''}${coverDates}${bfastNote}</div>
         </div>
         <div class="order-header-meta">
           <span class="progress-pill${allDone?' done-all':''}" id="opill-${oi}">${done}/${total}${allDone?' ✓':''}</span>
@@ -937,6 +1049,10 @@ function renderOrders(){
         <div class="add-order-row" style="margin-top:12px;">
           <input type="text" id="newOrdInput-${oi}" placeholder="Add a custom item…" onkeydown="if(event.key==='Enter')addCustomOrder(${oi})">
           <button onclick="addCustomOrder(${oi})">+ Add</button>
+        </div>
+        <div class="order-notes-wrap">
+          <div class="order-notes-label">&#128221; Order notes</div>
+          <textarea class="order-notes-ta" id="onotes-${oi}" placeholder="e.g. sub brand, quantity adjustment, special instructions…" oninput="saveOrderNote(${oi},this.value)">${orderNotes[`${cycle}-${oi}`]||''}</textarea>
         </div>
         <div style="margin-top:8px;display:flex;align-items:center;gap:12px;flex-wrap:wrap;">
           <button class="reset-btn" onclick="resetOrder(${oi})">reset checklist</button>
@@ -1011,7 +1127,84 @@ function resetOrder(oi){
   if(body&&!body.classList.contains('open')){body.classList.add('open');arr.textContent='▲';}
 }
 
-// ── Print & Email ─────────────────────────────────────────────────────────────
+// ── Order notes ───────────────────────────────────────────────────────────────
+function saveOrderNote(oi, val){
+  orderNotes[`${cycleKey()}-${oi}`] = val;
+}
+
+// ── Count & Review modal ──────────────────────────────────────────────────────
+function openCountModal(){
+  const cycle = cycleKey();
+  let html = '';
+  orderTemplates.forEach((o, oi) => {
+    const orderDate = fmt(cd(o.orderDay.wk, o.orderDay.d));
+    const coverDates = o.coversDays.map(c => fmt(orderDayDate(o,c.wk, c.d))).join(', ');
+    html += `<div class="count-order-block">
+      <div class="count-order-title">Order due ${orderDate} — covers ${coverDates}</div>`;
+
+    const renderCountItem = (item, type, ii) => {
+      const ik = invKey(oi, type, ii);
+      const needed = calcQtyNeeded(item);
+      const onHand = parseInt(inventory[ik]) || 0;
+      const toOrder = effToOrder(oi, type, ii, item);
+      const manual = isOverridden(oi, type, ii);
+      const chipCls = toOrder === 0 ? (manual?'ok':'ok') : 'need';
+      const chipTxt = toOrder === 0 ? (manual?'✓ Skip (manual)':'✓ Have enough') : `Order ${toOrder}${manual?' (manual)':''}`;
+      return `<div class="count-item-row">
+        <div class="count-item-name">${item.name}</div>
+        <div class="count-item-need">need ${needed}</div>
+        <div class="inv-field" style="flex-shrink:0;">
+          <label for="cinv-${ik}" style="font-size:11px;color:var(--text3);">On hand:</label>
+          <input type="number" id="cinv-${ik}" value="${onHand||''}" min="0" placeholder="0"
+            style="width:66px;font-size:13px;padding:3px 8px;border-radius:var(--radius-sm);border:0.5px solid var(--border2);background:var(--bg2);color:var(--text);-moz-appearance:textfield;"
+            oninput="syncCountInv('${ik}',${oi},'${type}',${ii},this.value)">
+        </div>
+        <span class="count-chip ${chipCls}" id="cchip-${ik}">${chipTxt}</span>
+      </div>`;
+    };
+
+    html += `<div style="font-size:11px;font-weight:600;color:var(--text3);text-transform:uppercase;letter-spacing:.07em;margin:8px 0 4px;">Breakfast</div>`;
+    o.breakfast.forEach((item, ii) => { html += renderCountItem(item, 'b', ii); });
+    html += `<div style="font-size:11px;font-weight:600;color:var(--text3);text-transform:uppercase;letter-spacing:.07em;margin:8px 0 4px;">Lunch</div>`;
+    o.lunch.forEach((item, ii) => { html += renderCountItem(item, 'l', ii); });
+    html += `</div>`;
+  });
+  document.getElementById('countModalBody').innerHTML = html;
+  document.getElementById('countModalBg').style.display = 'flex';
+}
+
+function syncCountInv(ik, oi, type, ii, val){
+  // Write through to main inventory + mirror back to order tab input if visible
+  inventory[ik] = parseInt(val) || 0;
+  const orderInput = document.getElementById(`inv-${ik}`);
+  if(orderInput) orderInput.value = val;
+  refreshQtyChip(oi, type, ii);
+  // Update chip in count modal
+  const items = type==='b' ? orderTemplates[oi].breakfast : orderTemplates[oi].lunch;
+  const item = items[ii];
+  if(!item) return;
+  const needed = calcQtyNeeded(item);
+  const toOrder = effToOrder(oi, type, ii, item);
+  const manual = isOverridden(oi, type, ii);
+  const chip = document.getElementById(`cchip-${ik}`);
+  if(chip){
+    chip.textContent = toOrder === 0 ? (manual?'✓ Skip (manual)':'✓ Have enough') : `Order ${toOrder}${manual?' (manual)':''}`;
+    chip.className = 'count-chip ' + (toOrder === 0 ? 'ok' : 'need');
+  }
+}
+
+function clearAllCounts(){
+  if(!confirm('Clear all on-hand counts? This zeros out every inventory field.')) return;
+  Object.keys(inventory).forEach(k => delete inventory[k]);
+  openCountModal(); // re-render with zeroed fields
+}
+
+function closeCountModal(){
+  document.getElementById('countModalBg').style.display = 'none';
+  renderOrders(); // refresh order tab so chips & on-hand fields reflect new counts
+}
+
+
 function printOrder(oi){
   // Mark which order to print, open its body, then print
   document.querySelectorAll('.order-section').forEach((el,idx)=>{
@@ -1033,7 +1226,7 @@ function buildOrderText(oi){
   const o=orderTemplates[oi];
   const orderDate=fmt(cd(o.orderDay.wk,o.orderDay.d));
   const deliverDate=fmt(cd(o.deliverDay.wk,o.deliverDay.d));
-  const coverDates=o.coversDays.map(c=>fmt(cd(c.wk,c.d))).join(', ');
+  const coverDates=o.coversDays.map(c=>fmt(orderDayDate(o,c.wk,c.d))).join(', ');
   let lines=[];
   lines.push(`PIER — SUMMER SCHOOL FOOD ORDER`);
   lines.push(`Order by: ${orderDate}`);
@@ -1047,8 +1240,9 @@ function buildOrderText(oi){
     const ik=invKey(oi,'b',ii);
     const needed=calcQtyNeeded(item);
     const onHand=parseInt(inventory[ik])||0;
-    const toOrder=Math.max(0,needed-onHand);
-    const status=toOrder===0?'(have enough)':'ORDER: '+toOrder;
+    const toOrder=effToOrder(oi,'b',ii,item);
+    const manual=isOverridden(oi,'b',ii);
+    const status=toOrder===0?(manual?'(manual: skip)':'(have enough)'):'ORDER: '+toOrder+(manual?' (manual override)':'');
     lines.push(`  ${item.name}`);
     lines.push(`    Need ${needed}  |  On hand: ${onHand}  |  ${status}`);
   });
@@ -1059,8 +1253,9 @@ function buildOrderText(oi){
     const ik=invKey(oi,'l',ii);
     const needed=calcQtyNeeded(item);
     const onHand=parseInt(inventory[ik])||0;
-    const toOrder=Math.max(0,needed-onHand);
-    const status=toOrder===0?'(have enough)':'ORDER: '+toOrder;
+    const toOrder=effToOrder(oi,'l',ii,item);
+    const manual=isOverridden(oi,'l',ii);
+    const status=toOrder===0?(manual?'(manual: skip)':'(have enough)'):'ORDER: '+toOrder+(manual?' (manual override)':'');
     lines.push(`  ${item.name}`);
     lines.push(`    Need ${needed}  |  On hand: ${onHand}  |  ${status}`);
   });
@@ -1071,6 +1266,13 @@ function buildOrderText(oi){
     lines.push('───────────────────────────────');
     custList.forEach(name=>lines.push(`  ${name}`));
   }
+  const note = (orderNotes[`${cycleKey()}-${oi}`]||'').trim();
+  if(note){
+    lines.push('');
+    lines.push('NOTES');
+    lines.push('───────────────────────────────');
+    lines.push(note);
+  }
   return lines.join('\n');
 }
 
@@ -1078,7 +1280,7 @@ function openEmailModal(oi){
   const sel=document.getElementById('emailOrderSel');
   sel.innerHTML=orderTemplates.map((o,idx)=>{
     const orderDate=fmt(cd(o.orderDay.wk,o.orderDay.d));
-    const coverDates=o.coversDays.map(c=>fmt(cd(c.wk,c.d))).join(' & ');
+    const coverDates=o.coversDays.map(c=>fmt(orderDayDate(o,c.wk,c.d))).join(' & ');
     return `<option value="${idx}"${idx===oi?' selected':''}>Order due ${orderDate} — covers ${coverDates}</option>`;
   }).join('');
   updateEmailSubject();
@@ -1089,7 +1291,7 @@ function updateEmailSubject(){
   const oi=parseInt(document.getElementById('emailOrderSel').value);
   const o=orderTemplates[oi];
   const orderDate=fmt(cd(o.orderDay.wk,o.orderDay.d));
-  const coverDates=o.coversDays.map(c=>fmt(cd(c.wk,c.d))).join(' & ');
+  const coverDates=o.coversDays.map(c=>fmt(orderDayDate(o,c.wk,c.d))).join(' & ');
   document.getElementById('emailSubject').value=`Pier — Summer School Food Order — due ${orderDate} (covers ${coverDates})`;
 }
 function closeEmailModal(){
@@ -1107,6 +1309,69 @@ function sendEmail(){
     +'&body='+encodeURIComponent(body);
   window.open(gmailUrl,'_blank');
   closeEmailModal();
+}
+
+// ── Save / Load progress ──────────────────────────────────────────────────────
+function saveState(){
+  const state = {
+    version: 1,
+    savedAt: new Date().toISOString(),
+    cycleStart: cycleStart.toISOString().slice(0,10),
+    qtyB, qtyL,
+    prepChecks:    Object.assign({}, prepChecks),
+    taskDone:      Object.assign({}, taskDone),
+    customTasks:   Object.assign({}, customTasks),
+    orderChecks:   Object.assign({}, orderChecks),
+    customOrderItems: Object.assign({}, customOrderItems),
+    customOrderDone:  Object.assign({}, customOrderDone),
+    orderNotes:       Object.assign({}, orderNotes),
+    inventory:     Object.assign({}, inventory),
+    orderOverrides: Object.assign({}, orderOverrides),
+  };
+  const blob = new Blob([JSON.stringify(state, null, 2)], {type:'application/json'});
+  const url  = URL.createObjectURL(blob);
+  const a    = document.createElement('a');
+  const date = new Date().toLocaleDateString('en-US',{month:'short',day:'numeric',year:'numeric'}).replace(/ /g,'-');
+  a.href     = url;
+  a.download = `pier-menu-progress-${date}.json`;
+  a.click();
+  URL.revokeObjectURL(url);
+}
+
+function loadState(input){
+  const file = input.files[0];
+  if(!file) return;
+  const reader = new FileReader();
+  reader.onload = e => {
+    try {
+      const s = JSON.parse(e.target.result);
+      // Restore all state
+      if(s.cycleStart){ cycleStart=parseLocal(s.cycleStart); document.getElementById('cycleSel').value=s.cycleStart; }
+      if(s.qtyB){ qtyB=s.qtyB; document.getElementById('qtyB').value=qtyB; }
+      if(s.qtyL){ qtyL=s.qtyL; document.getElementById('qtyL').value=qtyL; }
+      if(s.prepChecks)     Object.assign(prepChecks,    s.prepChecks);
+      if(s.taskDone)       Object.assign(taskDone,      s.taskDone);
+      if(s.customTasks)    Object.assign(customTasks,   s.customTasks);
+      if(s.orderChecks)    Object.assign(orderChecks,   s.orderChecks);
+      if(s.customOrderItems) Object.assign(customOrderItems, s.customOrderItems);
+      if(s.customOrderDone)  Object.assign(customOrderDone,  s.customOrderDone);
+      if(s.orderNotes)       Object.assign(orderNotes,       s.orderNotes);
+      if(s.inventory)      Object.assign(inventory,     s.inventory);
+      if(s.orderOverrides) Object.assign(orderOverrides, s.orderOverrides);
+      // Re-render everything
+      updateCycleBanner(); updateWeekBtns(); renderDays();
+      document.getElementById('detailPanel').style.display='none';
+      selectedDay=null;
+      renderCashier(); renderOrders();
+      document.getElementById('headerSub').textContent=
+        `${fmt(cycleStart)} – ${fmt(addDays(cycleStart,18))} · ${qtyB} breakfasts / ${qtyL} lunches per day`;
+      alert(`✓ Progress loaded from ${file.name}\nSaved: ${s.savedAt ? new Date(s.savedAt).toLocaleString() : 'unknown'}`);
+    } catch(err) {
+      alert('Could not load file — make sure it\'s a valid Pier Menu progress file.');
+    }
+  };
+  reader.readAsText(file);
+  input.value=''; // reset so same file can be reloaded if needed
 }
 
 // ── Init ──────────────────────────────────────────────────────────────────────
