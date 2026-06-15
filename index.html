@@ -244,9 +244,9 @@ select,input[type=number]{font-family:inherit;font-size:13px;padding:5px 10px;bo
     </div>
     <div class="qty-row">
       <label>&#127830; Breakfasts/day:</label>
-      <input type="number" id="qtyB" value="50" min="1" max="999" onchange="updateQtys()">
+      <input type="number" id="qtyB" value="50" min="1" max="999" oninput="updateQtys()">
       <label>&#127829; Lunches/day:</label>
-      <input type="number" id="qtyL" value="70" min="1" max="999" onchange="updateQtys()">
+      <input type="number" id="qtyL" value="70" min="1" max="999" oninput="updateQtys()">
     </div>
     <div class="qty-row">
       <button class="action-btn" onclick="saveState()" title="Save all checkboxes, inventory counts and custom tasks to a file">&#128190; Save progress</button>
@@ -757,7 +757,7 @@ function selectDay(i){
   sysTasks.forEach(t=>{
     const chk=taskDone[t.id];
     bodyHtml+=`<div class="check-item system-task${chk?' done':''}" id="srow-${t.id}">
-      <input type="checkbox" id="schk-${t.id}"${chk?' checked':''} onchange="toggleSysTask('${t.id}',${i})">
+      <input type="checkbox" id="schk-${t.id}" autocomplete="off"${chk?' checked':''} onchange="toggleSysTask('${t.id}',${i})">
       <label for="schk-${t.id}">${t.label}</label>
     </div>`;
   });
@@ -767,7 +767,7 @@ function selectDay(i){
     const key=mkPrepId(ck,wk,i,idx),chk=prepChecks[key];
     const isWarn=p.startsWith('⚠️')||p.startsWith('&#9888;');
     bodyHtml+=`<div class="check-item${isWarn?' warn-task':''}${chk?' done':''}" id="prow-${idx}">
-      <input type="checkbox" id="pchk-${idx}"${chk?' checked':''} onchange="togglePrep(${i},${idx},'${key}')">
+      <input type="checkbox" id="pchk-${idx}" autocomplete="off"${chk?' checked':''} onchange="togglePrep(${i},${idx},'${key}')">
       <label for="pchk-${idx}">${p}</label>
     </div>`;
   });
@@ -776,7 +776,7 @@ function selectDay(i){
   custList.forEach((task,idx)=>{
     const key=mkCustomId(ck,wk,i,idx),chk=taskDone[key];
     bodyHtml+=`<div class="check-item${chk?' done':''}" id="crow-${idx}">
-      <input type="checkbox" id="cchk-${idx}"${chk?' checked':''} onchange="toggleCustomTask(${i},${idx},'${key}')">
+      <input type="checkbox" id="cchk-${idx}" autocomplete="off"${chk?' checked':''} onchange="toggleCustomTask(${i},${idx},'${key}')">
       <label for="cchk-${idx}">${task}</label>
       <button class="del-task" onclick="deleteCustomTask(${i},${idx})" title="Remove task">&#10005;</button>
     </div>`;
@@ -811,19 +811,22 @@ function rebuildPrepProgress(dayIdx){
   if(lbl) lbl.innerHTML=`${totalDone} of ${allTaskCount} done &nbsp;<button class="reset-btn" onclick="resetPrep(${dayIdx})">reset all</button>`;
 }
 function toggleSysTask(id,dayIdx){
-  taskDone[id]=!taskDone[id];
+  const cb=document.getElementById(`schk-${id}`);
+  taskDone[id]=cb?cb.checked:!taskDone[id];
   const row=document.getElementById(`srow-${id}`);
   if(row) taskDone[id]?row.classList.add('done'):row.classList.remove('done');
   rebuildPrepProgress(dayIdx);
 }
 function togglePrep(dayIdx,taskIdx,key){
-  prepChecks[key]=!prepChecks[key];
+  const cb=document.getElementById(`pchk-${taskIdx}`);
+  prepChecks[key]=cb?cb.checked:!prepChecks[key];
   const row=document.getElementById(`prow-${taskIdx}`);
   if(row) prepChecks[key]?row.classList.add('done'):row.classList.remove('done');
   rebuildPrepProgress(dayIdx);
 }
 function toggleCustomTask(dayIdx,taskIdx,key){
-  taskDone[key]=!taskDone[key];
+  const cb=document.getElementById(`cchk-${taskIdx}`);
+  taskDone[key]=cb?cb.checked:!taskDone[key];
   const row=document.getElementById(`crow-${taskIdx}`);
   if(row) taskDone[key]?row.classList.add('done'):row.classList.remove('done');
   rebuildPrepProgress(dayIdx);
@@ -971,7 +974,7 @@ function renderOrderItem(item,key,oi,type,ii){
     ? `Need: ${qtyB} (breakfast) + ${(item.usedOn.length-1)*qtyL} (cereal lunch) = ${needed}`
     : (() => { const dayQty=item.mealType==='B'?qtyB:qtyL; const perEntry=item.qtyPer>1?`${item.qtyPer}×${dayQty}`:dayQty; return `Need: ${item.usedOn.map(()=>perEntry).join(' + ')} = ${needed}${item.qtyPer>1?' ('+item.qtyPer+' per person)':''}`; })();
   return `<div class="order-row${chk?' done':''}" id="orow-${key}">
-    <input type="checkbox" id="ocb-${key}"${chk?' checked':''} onchange="toggleOrder('${key}',${oi})">
+    <input type="checkbox" id="ocb-${key}" autocomplete="off"${chk?' checked':''} onchange="toggleOrder('${key}',${oi})">
     <div class="order-row-body">
       <div class="order-item-name" onclick="document.getElementById('ocb-${key}').click()">${item.name}</div>
       <div class="order-item-used">${usedTags}${doubleBadge}</div>
@@ -1024,7 +1027,7 @@ function renderOrders(){
     const custItems=custList.map((name,ii)=>{
       const key=mkCustOrdId(cycle,oi,ii), chk=customOrderDone[key];
       return `<div class="order-custom-row${chk?' done':''}" id="corow-${key}">
-        <input type="checkbox" id="cocb-${key}"${chk?' checked':''} onchange="toggleCustomOrder('${key}',${oi})">
+        <input type="checkbox" id="cocb-${key}" autocomplete="off"${chk?' checked':''} onchange="toggleCustomOrder('${key}',${oi})">
         <div class="order-item-name" style="flex:1" onclick="document.getElementById('cocb-${key}').click()">${name}</div>
         <button class="del-task" onclick="deleteCustomOrder(${oi},${ii})" title="Remove">&#10005;</button>
       </div>`;
@@ -1071,13 +1074,15 @@ function toggleOrder_section(oi){
   arr.textContent=open?'▲':'▼';
 }
 function toggleOrder(key,oi){
-  orderChecks[key]=!orderChecks[key];
+  const cb=document.getElementById(`ocb-${key}`);
+  orderChecks[key]=cb?cb.checked:!orderChecks[key];
   const row=document.getElementById(`orow-${key}`);
   if(row) orderChecks[key]?row.classList.add('done'):row.classList.remove('done');
   updateOrderMeta(oi);
 }
 function toggleCustomOrder(key,oi){
-  customOrderDone[key]=!customOrderDone[key];
+  const cb=document.getElementById(`cocb-${key}`);
+  customOrderDone[key]=cb?cb.checked:!customOrderDone[key];
   const row=document.getElementById(`corow-${key}`);
   if(row) customOrderDone[key]?row.classList.add('done'):row.classList.remove('done');
   updateOrderMeta(oi);
@@ -1313,6 +1318,9 @@ function sendEmail(){
 
 // ── Save / Load progress ──────────────────────────────────────────────────────
 function saveState(){
+  // read fresh from inputs in case oninput hasn't fired yet
+  qtyB=parseInt(document.getElementById('qtyB').value)||50;
+  qtyL=parseInt(document.getElementById('qtyL').value)||70;
   const state = {
     version: 1,
     savedAt: new Date().toISOString(),
